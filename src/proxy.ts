@@ -2,7 +2,8 @@ import { verifyAdminToken } from '@/lib/auth/jwt';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-export async function middleware(request: NextRequest) {
+// 함수 이름을 middleware → proxy로 변경
+export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // 관리자 페이지 보호
