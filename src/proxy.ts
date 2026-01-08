@@ -1,28 +1,32 @@
-import { verifyAdminToken } from '@/lib/auth/jwt';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-// 함수 이름을 middleware → proxy로 변경
 export async function proxy(request: NextRequest) {
-  const path = request.nextUrl.pathname;
+  const { pathname } = request.nextUrl;
 
-  // 관리자 페이지 보호
-  if (path.startsWith('/admin')) {
-    const token = request.cookies.get('admin_token')?.value;
-
-    if (!token) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
-
-    const payload = await verifyAdminToken(token);
-    if (!payload) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
+  // 로그인 페이지는 인증 체크 제외
+  if (pathname === '/login') {
+    return NextResponse.next();
   }
 
+  // API 라우트는 제외
+  if (pathname.startsWith('/api')) {
+    return NextResponse.next();
+  }
+
+  // 정적 파일은 제외
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/static') ||
+    pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js)$/)
+  ) {
+    return NextResponse.next();
+  }
+
+  // 클라이언트 사이드에서 인증 체크하므로 서버 proxy에서는 통과
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

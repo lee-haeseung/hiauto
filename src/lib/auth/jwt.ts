@@ -26,7 +26,7 @@ export async function verifyAdminToken(token: string) {
 
 // 액세스 키 JWT 생성 (게시물 접근용)
 export async function createAccessKeyToken(postId: number, expiresAt?: Date) {
-  const jwt = new SignJWT({ postId, type: 'access_key' })
+  const jwt = new SignJWT({ postId, role: 'access-key' })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt();
 
