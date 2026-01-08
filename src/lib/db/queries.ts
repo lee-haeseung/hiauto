@@ -81,6 +81,17 @@ export async function getPostById(postId: number) {
   return result[0] || null;
 }
 
+// Post 생성
+export async function createPost(data: {
+  subBoardId: number;
+  title: string;
+  content: string;
+  accessKey?: string;
+}) {
+  const result = await db.insert(posts).values(data).returning();
+  return result[0];
+}
+
 // 관리자 조회 (로그인용)
 export async function getAdminByUsername(username: string) {
   const result = await db.select().from(admins).where(eq(admins.username, username));

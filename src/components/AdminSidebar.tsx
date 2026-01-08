@@ -63,18 +63,26 @@ export default function AdminSidebar() {
   return (
     <div className="w-64 h-screen bg-gray-100 border-r border-gray-300 flex flex-col">
       {/* 버튼 영역 */}
-      <div className="p-4 border-b border-gray-300 flex gap-2">
+      <div className="p-4 border-b border-gray-300">
+        <div className="flex gap-2 mb-2">
+          <button
+            onClick={() => router.push('/search')}
+            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-medium"
+          >
+            검색
+          </button>
+          <button
+            onClick={() => router.push('/settings')}
+            className="flex-1 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition font-medium"
+          >
+            설정
+          </button>
+        </div>
         <button
-          onClick={() => router.push('/search')}
-          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-medium"
+          onClick={() => router.push('/write')}
+          className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition font-medium"
         >
-          검색
-        </button>
-        <button
-          onClick={() => router.push('/settings')}
-          className="flex-1 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition font-medium"
-        >
-          설정
+          글쓰기
         </button>
       </div>
 
