@@ -14,8 +14,11 @@ export default function BoardPage() {
   const params = useParams();
   const subBoardId = params?.subBoardId as string;
   const [posts, setPosts] = useState<Post[]>([]);
+  const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchTarget, setSearchTarget] = useState<'all' | 'title' | 'content'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (subBoardId) {
@@ -33,12 +36,46 @@ export default function BoardPage() {
       }
       
       const data = await response.json();
+      setAllPosts(data);
       setPosts(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      setPosts(allPosts);
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams({
+        query: searchQuery,
+        target: searchTarget,
+        subBoardId: subBoardId,
+      });
+
+      const response = await fetch(`/api/search?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error('검색에 실패했습니다.');
+      }
+
+      const data = await response.json();
+      setPosts(data);
+    } catch (error) {
+      console.error('Search error:', error);
+      alert('검색 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleReset = () => {
+    setSearchQuery('');
+    setSearchTarget('all');
+    setPosts(allPosts);
   };
 
   const formatDate = (dateString: string) => {
@@ -57,6 +94,33 @@ export default function BoardPage() {
       <div className="p-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-800">게시글 목록</h1>
+        </div>
+
+        {/* 검색 바 */}
+        <div className="mb-4 flex items-center gap-2">
+          <select 
+            value={searchTarget} 
+            onChange={(e) => setSearchTarget(e.target.value as any)}
+            className="px-3 py-2 border"
+          >
+            <option value="all">전체</option>
+            <option value="title">제목</option>
+            <option value="content">내용</option>
+          </select>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            className="flex-1 px-3 py-2 border"
+            placeholder="검색어를 입력하세요"
+          />
+          <button onClick={handleSearch} className="px-4 py-2 bg-blue-600 text-white">
+            검색
+          </button>
+          <button onClick={handleReset} className="px-4 py-2 bg-gray-400 text-white">
+            초기화
+          </button>
         </div>
 
         {loading ? (

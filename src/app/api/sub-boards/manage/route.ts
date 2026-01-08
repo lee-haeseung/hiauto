@@ -1,4 +1,4 @@
-import { createSubBoard, deleteSubBoard, updateSubBoardOrder, updateSubBoardName } from '@/lib/db/queries';
+import { createSubBoard, deleteSubBoard, updateSubBoardName, updateSubBoardOrder } from '@/lib/db/queries';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
