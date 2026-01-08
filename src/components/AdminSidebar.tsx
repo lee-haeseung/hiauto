@@ -71,7 +71,7 @@ export default function AdminSidebar() {
           검색
         </button>
         <button
-          onClick={() => console.log('설정 클릭')}
+          onClick={() => router.push('/settings')}
           className="flex-1 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition font-medium"
         >
           설정

@@ -12,6 +12,7 @@ export const admins = pgTable('admins', {
 export const boards = pgTable('boards', {
   id: serial('id').primaryKey(),
   name: text('name').notNull().unique(),
+  order: integer('order').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -20,6 +21,7 @@ export const subBoards = pgTable('sub_boards', {
   id: serial('id').primaryKey(),
   boardId: integer('board_id').references(() => boards.id).notNull(),
   name: text('name').notNull(),
+  order: integer('order').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

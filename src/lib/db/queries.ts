@@ -4,12 +4,62 @@ import { accessKeys, admins, boards, posts, subBoards } from './schema';
 
 // Boards 조회
 export async function getAllBoards() {
-  return await db.select().from(boards);
+  return await db.select().from(boards).orderBy(boards.order);
+}
+
+// Board 추가
+export async function createBoard(name: string) {
+  const maxOrder = await db.select({ max: sql<number>`MAX(${boards.order})` }).from(boards);
+  const nextOrder = (maxOrder[0]?.max ?? -1) + 1;
+  
+  const result = await db.insert(boards).values({ name, order: nextOrder }).returning();
+  return result[0];
+}
+
+// Board 순서 변경
+export async function updateBoardOrder(id: number, newOrder: number) {
+  return await db.update(boards).set({ order: newOrder }).where(eq(boards.id, id));
+}
+
+// Board 이름 변경
+export async function updateBoardName(id: number, name: string) {
+  return await db.update(boards).set({ name }).where(eq(boards.id, id));
+}
+
+// Board 삭제
+export async function deleteBoard(id: number) {
+  return await db.delete(boards).where(eq(boards.id, id));
 }
 
 // SubBoards 조회 (특정 board의 subBoards)
 export async function getSubBoardsByBoardId(boardId: number) {
-  return await db.select().from(subBoards).where(eq(subBoards.boardId, boardId));
+  return await db.select().from(subBoards).where(eq(subBoards.boardId, boardId)).orderBy(subBoards.order);
+}
+
+// SubBoard 추가
+export async function createSubBoard(boardId: number, name: string) {
+  const maxOrder = await db.select({ max: sql<number>`MAX(${subBoards.order})` })
+    .from(subBoards)
+    .where(eq(subBoards.boardId, boardId));
+  const nextOrder = (maxOrder[0]?.max ?? -1) + 1;
+  
+  const result = await db.insert(subBoards).values({ boardId, name, order: nextOrder }).returning();
+  return result[0];
+}
+
+// SubBoard 순서 변경
+export async function updateSubBoardOrder(id: number, newOrder: number) {
+  return await db.update(subBoards).set({ order: newOrder }).where(eq(subBoards.id, id));
+}
+
+// SubBoard 이름 변경
+export async function updateSubBoardName(id: number, name: string) {
+  return await db.update(subBoards).set({ name }).where(eq(subBoards.id, id));
+}
+
+// SubBoard 삭제
+export async function deleteSubBoard(id: number) {
+  return await db.delete(subBoards).where(eq(subBoards.id, id));
 }
 
 // Posts 조회 (특정 subBoard의 posts)

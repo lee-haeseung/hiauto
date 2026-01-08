@@ -1,0 +1,58 @@
+import { createBoard, deleteBoard, updateBoardOrder, updateBoardName } from '@/lib/db/queries';
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(request: NextRequest) {
+  try {
+    const { name } = await request.json();
+
+    if (!name || typeof name !== 'string') {
+      return NextResponse.json({ error: 'Board name is required' }, { status: 400 });
+    }
+
+    const newBoard = await createBoard(name);
+    return NextResponse.json(newBoard, { status: 201 });
+  } catch (error) {
+    console.error('Error creating board:', error);
+    return NextResponse.json({ error: 'Failed to create board' }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const { id, order, name } = await request.json();
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
+
+    if (order !== undefined) {
+      await updateBoardOrder(id, order);
+    }
+    
+    if (name !== undefined) {
+      await updateBoardName(id, name);
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error updating board:', error);
+    return NextResponse.json({ error: 'Failed to update board' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = request.nextUrl;
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
+
+    await deleteBoard(parseInt(id));
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting board:', error);
+    return NextResponse.json({ error: 'Failed to delete board' }, { status: 500 });
+  }
+}
