@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 interface Board {
@@ -17,6 +17,7 @@ interface SubBoard {
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [boards, setBoards] = useState<Board[]>([]);
   const [subBoards, setSubBoards] = useState<{ [key: number]: SubBoard[] }>({});
   const [expandedBoards, setExpandedBoards] = useState<{ [key: number]: boolean }>({});
@@ -64,7 +65,7 @@ export default function AdminSidebar() {
       {/* 버튼 영역 */}
       <div className="p-4 border-b border-gray-300 flex gap-2">
         <button
-          onClick={() => console.log('검색 클릭')}
+          onClick={() => router.push('/search')}
           className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-medium"
         >
           검색

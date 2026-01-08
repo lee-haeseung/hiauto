@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { db } from './index';
 import { accessKeys, admins, boards, posts, subBoards } from './schema';
 
@@ -54,4 +54,54 @@ export async function verifyAccessKey(key: string) {
   }
   
   return accessKey;
+}
+
+// 게시글 검색
+export async function searchPosts(params: {
+  query: string;
+  target: 'title' | 'content' | 'all';
+  boardId?: number;
+  subBoardId?: number;
+}) {
+  const { query, target, boardId, subBoardId } = params;
+
+  let whereConditions: any[] = [];
+
+  // 검색 대상에 따른 조건
+  if (target === 'title') {
+    whereConditions.push(sql`${posts.title} ILIKE ${`%${query}%`}`);
+  } else if (target === 'content') {
+    whereConditions.push(sql`${posts.content} ILIKE ${`%${query}%`}`);
+  } else {
+    // 전체 검색
+    whereConditions.push(
+      sql`(${posts.title} ILIKE ${`%${query}%`} OR ${posts.content} ILIKE ${`%${query}%`})`
+    );
+  }
+
+  // subBoardId 필터
+  if (subBoardId) {
+    whereConditions.push(eq(posts.subBoardId, subBoardId));
+  } else if (boardId) {
+    // boardId만 있으면 해당 board의 모든 subBoards 검색
+    const boardSubBoards = await getSubBoardsByBoardId(boardId);
+    const subBoardIds = boardSubBoards.map(sb => sb.id);
+    if (subBoardIds.length > 0) {
+      whereConditions.push(sql`${posts.subBoardId} IN ${subBoardIds}`);
+    }
+  }
+
+  const result = await db
+    .select({
+      id: posts.id,
+      title: posts.title,
+      subBoardId: posts.subBoardId,
+      createdAt: posts.createdAt,
+    })
+    .from(posts)
+    .where(whereConditions.length > 0 ? sql`${sql.join(whereConditions, sql` AND `)}` : undefined)
+    .orderBy(posts.createdAt)
+    .limit(100);
+
+  return result;
 }
