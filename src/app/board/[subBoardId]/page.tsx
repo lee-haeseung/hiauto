@@ -1,7 +1,6 @@
 'use client';
 
 import AdminLayout from '@/components/AdminLayout';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -90,17 +89,16 @@ export default function BoardPage() {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {posts.map((post, index) => (
-                  <tr key={post.id} className="hover:bg-gray-50 transition">
+                  <tr
+                    key={post.id}
+                    onClick={() => window.location.href = `/post/${post.id}`}
+                    className="hover:bg-gray-50 transition cursor-pointer"
+                  >
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {posts.length - index}
                     </td>
-                    <td className="px-6 py-4">
-                      <Link
-                        href={`/post/${post.id}`}
-                        className="text-blue-600 hover:text-blue-800 hover:underline"
-                      >
-                        {post.title}
-                      </Link>
+                    <td className="px-6 py-4 text-blue-600">
+                      {post.title}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(post.createdAt)}
