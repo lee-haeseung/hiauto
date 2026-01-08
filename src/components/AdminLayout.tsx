@@ -10,16 +10,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
+    // 클라이언트 사이드에서만 실행
+    const checkAuth = () => {
+      const token = localStorage.getItem('token');
+      const role = localStorage.getItem('role');
 
-    if (!token || role !== 'admin') {
-      router.push('/login');
-      return;
-    }
+      if (!token || role !== 'admin') {
+        router.push('/login');
+        return;
+      }
 
-    setIsAuthenticated(true);
-    setIsLoading(false);
+      setIsAuthenticated(true);
+      setIsLoading(false);
+    };
+
+    checkAuth();
   }, [router]);
 
   if (isLoading) {

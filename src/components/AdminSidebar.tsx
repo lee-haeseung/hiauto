@@ -61,15 +61,20 @@ export default function AdminSidebar() {
 
   return (
     <div className="w-64 h-screen bg-gray-100 border-r border-gray-300 flex flex-col">
-      {/* 검색 영역 */}
-      <div className="p-4 border-b border-gray-300">
-        <input
-          type="text"
-          placeholder="검색..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+      {/* 버튼 영역 */}
+      <div className="p-4 border-b border-gray-300 flex gap-2">
+        <button
+          onClick={() => console.log('검색 클릭')}
+          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-medium"
+        >
+          검색
+        </button>
+        <button
+          onClick={() => console.log('설정 클릭')}
+          className="flex-1 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition font-medium"
+        >
+          설정
+        </button>
       </div>
 
       {/* 게시판 목록 */}
