@@ -1,5 +1,5 @@
-import { verifyAdminOrAccessKeyFromRequest } from '@/lib/auth/jwt';
-import { getAccessKeyById, getPostById } from '@/lib/db/queries';
+import { verifyAdminFromRequest, verifyAdminOrAccessKeyFromRequest } from '@/lib/auth/jwt';
+import { getAccessKeyById, getPostById, updatePost } from '@/lib/db/queries';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
@@ -53,5 +53,50 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching post:', error);
     return NextResponse.json({ error: 'Failed to fetch post' }, { status: 500 });
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ postId: string }> }
+) {
+  try {
+    // 관리자 권한 확인 (수정은 관리자만 가능)
+    const authResult = await verifyAdminFromRequest(request);
+    if ('error' in authResult) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
+    const { postId: postIdParam } = await params;
+    const postId = parseInt(postIdParam);
+    
+    if (isNaN(postId)) {
+      return NextResponse.json({ error: 'Invalid post ID' }, { status: 400 });
+    }
+
+    const body = await request.json();
+    const { subBoardId, title, content } = body;
+
+    if (!title || !content || !subBoardId) {
+      return NextResponse.json(
+        { error: 'title, content, subBoardId are required' },
+        { status: 400 }
+      );
+    }
+
+    const updatedPost = await updatePost(postId, {
+      subBoardId,
+      title,
+      content,
+    });
+
+    if (!updatedPost) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(updatedPost);
+  } catch (error) {
+    console.error('Error updating post:', error);
+    return NextResponse.json({ error: 'Failed to update post' }, { status: 500 });
   }
 }

@@ -37,6 +37,12 @@ export async function getSubBoardsByBoardId(boardId: number) {
   return await db.select().from(subBoards).where(eq(subBoards.boardId, boardId)).orderBy(subBoards.order);
 }
 
+// SubBoard 조회 (ID로)
+export async function getSubBoardById(subBoardId: number) {
+  const result = await db.select().from(subBoards).where(eq(subBoards.id, subBoardId));
+  return result[0] || null;
+}
+
 // SubBoard 추가
 export async function createSubBoard(boardId: number, name: string) {
   const maxOrder = await db.select({ max: sql<number>`MAX(${subBoards.order})` })
@@ -90,6 +96,23 @@ export async function createPost(data: {
   accessKey?: string;
 }) {
   const result = await db.insert(posts).values(data).returning();
+  return result[0];
+}
+
+// Post 수정
+export async function updatePost(
+  postId: number,
+  data: {
+    subBoardId?: number;
+    title?: string;
+    content?: string;
+  }
+) {
+  const result = await db
+    .update(posts)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(posts.id, postId))
+    .returning();
   return result[0];
 }
 

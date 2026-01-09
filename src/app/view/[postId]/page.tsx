@@ -6,10 +6,17 @@ import { useEffect, useState } from 'react';
 
 interface Post {
   id: number;
+  subBoardId: number;
   title: string;
   content: string;
   createdAt: string;
   updatedAt: string;
+}
+
+interface SubBoard {
+  id: number;
+  name: string;
+  boardId: number;
 }
 
 export default function ViewPostPage() {
@@ -17,6 +24,7 @@ export default function ViewPostPage() {
   const router = useRouter();
   const postId = params?.postId as string;
   const [post, setPost] = useState<Post | null>(null);
+  const [subBoard, setSubBoard] = useState<SubBoard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -60,6 +68,20 @@ export default function ViewPostPage() {
       
       const data = await response.json();
       setPost(data);
+      
+      // 하위 게시판 정보 가져오기
+      if (data.subBoardId) {
+        const subBoardResponse = await fetch(`/api/sub-boards?subBoardId=${data.subBoardId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        
+        if (subBoardResponse.ok) {
+          const subBoardData = await subBoardResponse.json();
+          setSubBoard(subBoardData);
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
     } finally {
@@ -93,6 +115,13 @@ export default function ViewPostPage() {
           <div className="max-w-4xl mx-auto">
             {/* 제목 */}
             <div className="bg-white border border-gray-200 rounded-lg p-6 mb-4">
+              {subBoard && (
+                <div className="mb-3">
+                  <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                    {subBoard.name}
+                  </span>
+                </div>
+              )}
               <h1 className="text-3xl font-bold text-gray-900 mb-4">
                 {post.title}
               </h1>
@@ -105,12 +134,24 @@ export default function ViewPostPage() {
             </div>
 
             {/* 내용 */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className="border border-gray-300 rounded-lg bg-white shadow-sm overflow-hidden">
               <div
-                className="prose max-w-none"
+                className="prose prose-sm sm:prose lg:prose-lg max-w-none focus:outline-none min-h-[500px] p-6 post-content"
                 dangerouslySetInnerHTML={{ __html: post.content }}
               />
             </div>
+
+            {/* 버튼 그룹 */}
+            {subBoard && (
+              <div className="mt-6">
+                <button
+                  onClick={() => router.push(`/board/${subBoard.id}`)}
+                  className="px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition"
+                >
+                  목록으로
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500">

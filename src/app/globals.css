@@ -33,6 +33,12 @@ body {
 .ProseMirror p {
   margin: 0.75em 0;
   line-height: 1.75;
+  min-height: 1.75em;
+}
+
+.ProseMirror p:empty::before {
+  content: '\200B';
+  display: inline-block;
 }
 
 .ProseMirror h1,
@@ -136,6 +142,18 @@ body {
   background: none;
   color: inherit;
   padding: 0;
+}
+
+/* 게시글 조회 페이지 스타일 */
+.post-content p {
+  margin: 0.75em 0;
+  line-height: 1.75;
+  min-height: 1.75em;
+}
+
+.post-content p:empty::before {
+  content: '\200B';
+  display: inline-block;
 }
 
 /* 선택 시 하이라이트 */

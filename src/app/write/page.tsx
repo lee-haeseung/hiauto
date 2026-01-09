@@ -12,7 +12,7 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import Underline from '@tiptap/extension-underline';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import 'tippy.js/dist/tippy.css';
 
@@ -29,6 +29,8 @@ interface SubBoard {
 
 export default function WritePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const postId = searchParams.get('postId');
   const [boards, setBoards] = useState<Board[]>([]);
   const [subBoards, setSubBoards] = useState<SubBoard[]>([]);
   const [selectedBoardId, setSelectedBoardId] = useState<string>('');
@@ -40,6 +42,8 @@ export default function WritePage() {
   const [showLinkPopover, setShowLinkPopover] = useState(false);
   const [linkPopoverPosition, setLinkPopoverPosition] = useState({ top: 0, left: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [postContent, setPostContent] = useState<string | null>(null);
   // rem 또는 다른 단위를 px로 변환
   const normalizeFontSize = (size: string | null): string => {
     if (!size) return '16px';
@@ -115,7 +119,12 @@ export default function WritePage() {
 
   useEffect(() => {
     loadBoards();
-  }, []);
+    
+    // 수정 모드: postId가 있으면 기존 게시물 데이터 로드
+    if (postId) {
+      loadPostData(postId);
+    }
+  }, [postId]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -140,6 +149,14 @@ export default function WritePage() {
     }
   }, [selectedBoardId]);
 
+  // 에디터가 준비되고 postContent가 있으면 내용 설정
+  useEffect(() => {
+    if (editor && postContent) {
+      editor.commands.setContent(postContent);
+      setPostContent(null); // 한 번만 설정되도록
+    }
+  }, [editor, postContent]);
+
   const loadBoards = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -163,6 +180,49 @@ export default function WritePage() {
       setSubBoards(data || []);
     } catch (error) {
       console.error('Failed to load sub-boards:', error);
+    }
+  };
+
+  const loadPostData = async (postId: string) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/posts/${postId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('게시글을 불러오는데 실패했습니다.');
+      }
+
+      const post = await response.json();
+      
+      // 게시판 정보를 가져오기 위해 subBoardId로 subBoard 조회
+      const subBoardResponse = await fetch(`/api/sub-boards?subBoardId=${post.subBoardId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const subBoardData = await subBoardResponse.json();
+      
+      // 게시판 선택
+      if (subBoardData && subBoardData.boardId) {
+        setSelectedBoardId(String(subBoardData.boardId));
+        // 하위 게시판 목록 로드
+        await loadSubBoards(subBoardData.boardId);
+        setSelectedSubBoardId(String(post.subBoardId));
+      }
+      
+      // 제목 설정
+      setTitle(post.title);
+      
+      // 에디터 내용을 state에 저장 (editor가 준비되면 useEffect에서 설정)
+      setPostContent(post.content);
+    } catch (error) {
+      console.error('Failed to load post:', error);
+      alert('게시글을 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -271,8 +331,14 @@ export default function WritePage() {
     setSubmitting(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/posts', {
-        method: 'POST',
+      
+      // 수정 모드인지 생성 모드인지 구분
+      const isEditMode = !!postId;
+      const url = isEditMode ? `/api/posts/${postId}` : '/api/posts';
+      const method = isEditMode ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -285,15 +351,15 @@ export default function WritePage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create post');
+        throw new Error(isEditMode ? 'Failed to update post' : 'Failed to create post');
       }
 
       const post = await response.json();
-      alert('게시글이 작성되었습니다!');
+      alert(isEditMode ? '게시글이 수정되었습니다!' : '게시글이 작성되었습니다!');
       router.push(`/post/${post.id}`);
     } catch (error) {
       console.error('Submit error:', error);
-      alert('게시글 작성에 실패했습니다.');
+      alert(postId ? '게시글 수정에 실패했습니다.' : '게시글 작성에 실패했습니다.');
     } finally {
       setSubmitting(false);
     }
@@ -302,7 +368,15 @@ export default function WritePage() {
   return (
     <AdminLayout>
       <div className="p-8 max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">글쓰기</h1>
+        <h1 className="text-3xl font-bold mb-8">{postId ? '글 수정' : '글쓰기'}</h1>
+
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-gray-500">게시글을 불러오는 중...</div>
+          </div>
+        )}
+
+        {!loading && (
 
         <div className="space-y-6">
           {/* 게시판 선택 */}
@@ -651,10 +725,11 @@ export default function WritePage() {
               disabled={submitting}
               className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50"
             >
-              {submitting ? '작성 중...' : '작성하기'}
+              {submitting ? (postId ? '수정 중...' : '작성 중...') : (postId ? '수정하기' : '작성하기')}
             </button>
           </div>
         </div>
+        )}
       </div>
     </AdminLayout>
   );
