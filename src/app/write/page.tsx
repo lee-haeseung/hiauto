@@ -14,6 +14,7 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import 'tippy.js/dist/tippy.css';
 
 interface Board {
   id: number;
@@ -36,6 +37,8 @@ export default function WritePage() {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [currentFontSize, setCurrentFontSize] = useState('16px');
+  const [showLinkPopover, setShowLinkPopover] = useState(false);
+  const [linkPopoverPosition, setLinkPopoverPosition] = useState({ top: 0, left: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   // rem 또는 다른 단위를 px로 변환
   const normalizeFontSize = (size: string | null): string => {
@@ -87,6 +90,17 @@ export default function WritePage() {
     editorProps: {
       attributes: {
         class: 'prose prose-sm sm:prose lg:prose-lg max-w-none focus:outline-none min-h-[500px] p-6',
+      },
+      handleClickOn: (view, pos, node, nodePos, event) => {
+        const target = event.target as HTMLElement;
+        if (target.tagName === 'A' && target.closest('.ProseMirror')) {
+          event.preventDefault();
+          setShowLinkPopover(true);
+          const rect = target.getBoundingClientRect();
+          setLinkPopoverPosition({ top: rect.bottom + window.scrollY, left: rect.left + window.scrollX });
+          return true;
+        }
+        return false;
       },
     },
     onUpdate: ({ editor }) => {
@@ -194,6 +208,28 @@ export default function WritePage() {
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
   };
 
+  const openLink = () => {
+    if (!editor) return;
+    const { href } = editor.getAttributes('link');
+    if (href) {
+      window.open(href, '_blank');
+    }
+  };
+
+  const copyLink = () => {
+    if (!editor) return;
+    const { href } = editor.getAttributes('link');
+    if (href) {
+      navigator.clipboard.writeText(href);
+      alert('링크가 복사되었습니다!');
+    }
+  };
+
+  const removeLink = () => {
+    if (!editor) return;
+    editor.chain().focus().unsetLink().run();
+  };
+
   const handleSubmit = async () => {
     if (!selectedSubBoardId) {
       alert('하위 게시판을 선택해주세요.');
@@ -298,17 +334,6 @@ export default function WritePage() {
           {/* 에디터 */}
           <div>
             <label className="block text-sm font-medium mb-2">내용 *</label>
-            
-            {/* 디버깅 정보 */}
-            {editor && (
-              <div className="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                <strong>디버깅 정보:</strong>
-                <div>현재 노드: {editor.state.selection.$head.parent.type.name}</div>
-                <div>textStyle 속성: {JSON.stringify(editor.getAttributes('textStyle'))}</div>
-                <div>heading 활성: {editor.isActive('heading') ? `level ${editor.getAttributes('heading').level}` : 'No'}</div>
-                <div>현재 fontSize: {currentFontSize || '없음'}</div>
-              </div>
-            )}
 
             <div className="border border-gray-300 rounded-lg bg-white shadow-sm overflow-hidden">
               {/* 툴바 */}
@@ -531,6 +556,64 @@ export default function WritePage() {
               {/* 에디터 컨텐츠 */}
               <EditorContent editor={editor} className="min-h-[500px]" />
             </div>
+            
+            {/* 링크 팝오버 - 에디터 외부에 배치 */}
+            {showLinkPopover && editor && editor.isActive('link') && (
+              <div 
+                className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[350px]"
+                style={{ top: `${linkPopoverPosition.top + 5}px`, left: `${linkPopoverPosition.left}px` }}
+              >
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                    <span className="text-xs text-gray-500">링크:</span>
+                    <a
+                      href={editor.getAttributes('link').href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:underline truncate flex-1"
+                    >
+                      {editor.getAttributes('link').href}
+                    </a>
+                  </div>
+                  <div className="flex gap-2 flex-nowrap">
+                    <button
+                      onClick={() => {
+                        setShowLinkPopover(false);
+                        setLink();
+                      }}
+                      className="px-4 py-2 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition whitespace-nowrap"
+                    >
+                      ✏️ 수정
+                    </button>
+                    <button
+                      onClick={() => {
+                        copyLink();
+                        setShowLinkPopover(false);
+                      }}
+                      className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition whitespace-nowrap"
+                    >
+                      📋 복사
+                    </button>
+                    <button
+                      onClick={() => {
+                        removeLink();
+                        setShowLinkPopover(false);
+                      }}
+                      className="px-4 py-2 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition whitespace-nowrap"
+                    >
+                      🗑️ 삭제
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setShowLinkPopover(false)}
+                    className="mt-1 text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    닫기
+                  </button>
+                </div>
+              </div>
+            )}
+            
             <p className="mt-2 text-sm text-gray-500">
               💡 이미지, 동영상, PDF 등 다양한 파일을 업로드하여 글에 삽입할 수 있습니다.
             </p>
