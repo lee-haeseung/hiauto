@@ -118,6 +118,20 @@ export default function WritePage() {
   }, []);
 
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showLinkPopover && !target.closest('.link-popover') && !target.closest('a')) {
+        setShowLinkPopover(false);
+      }
+    };
+
+    if (showLinkPopover) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showLinkPopover]);
+
+  useEffect(() => {
     if (selectedBoardId) {
       loadSubBoards(parseInt(selectedBoardId));
     } else {
@@ -560,7 +574,7 @@ export default function WritePage() {
             {/* 링크 팝오버 - 에디터 외부에 배치 */}
             {showLinkPopover && editor && editor.isActive('link') && (
               <div 
-                className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[350px]"
+                className="link-popover fixed z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[350px]"
                 style={{ top: `${linkPopoverPosition.top + 5}px`, left: `${linkPopoverPosition.left}px` }}
               >
                 <div className="flex flex-col gap-2">
@@ -604,12 +618,6 @@ export default function WritePage() {
                       🗑️ 삭제
                     </button>
                   </div>
-                  <button
-                    onClick={() => setShowLinkPopover(false)}
-                    className="mt-1 text-xs text-gray-500 hover:text-gray-700"
-                  >
-                    닫기
-                  </button>
                 </div>
               </div>
             )}
