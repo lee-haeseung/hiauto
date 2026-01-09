@@ -19,13 +19,15 @@ export async function POST(request: NextRequest) {
     // 파일명 생성 (타임스탬프 + 원본 파일명)
     const timestamp = Date.now();
     const fileName = `${timestamp}-${file.name}`;
-    const filePath = `uploads/${fileName}`;
+    const uploadPath = process.env.SUPABASE_UPLOAD_PATH!;
+    const filePath = `${uploadPath}/${fileName}`;
 
     // Supabase Storage에 업로드
+    const bucketName = process.env.SUPABASE_STORAGE_BUCKET!;
     const { data, error } = await supabase.storage
-      .from('hiauto-files')
+      .from(bucketName)
       .upload(filePath, file, {
-        cacheControl: '3600',
+        cacheControl: process.env.SUPABASE_CACHE_CONTROL || '3600',
         upsert: false,
       });
 
@@ -36,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     // 공개 URL 생성
     const { data: urlData } = supabase.storage
-      .from('hiauto-files')
+      .from(bucketName)
       .getPublicUrl(filePath);
 
     return NextResponse.json({
