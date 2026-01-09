@@ -1,5 +1,6 @@
 'use client';
 
+import AccessKeyLayout from '@/components/AccessKeyLayout';
 import AdminLayout from '@/components/AdminLayout';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -19,8 +20,15 @@ export default function PostDetailPage() {
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [role, setRole] = useState<string | null>(null);
+  const [roleLoading, setRoleLoading] = useState(true);
 
   useEffect(() => {
+    // 역할 확인
+    const userRole = localStorage.getItem('role');
+    setRole(userRole);
+    setRoleLoading(false);
+    
     if (postId) {
       loadPost();
     }
@@ -29,7 +37,24 @@ export default function PostDetailPage() {
   const loadPost = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/posts/${postId}`);
+      const token = localStorage.getItem('token');
+      const userRole = localStorage.getItem('role');
+      const storedPostId = localStorage.getItem('postId');
+      
+      // access-key 역할인 경우 권한 검증
+      if (userRole === 'access-key') {
+        if (storedPostId !== postId) {
+          setError('접근 권한이 없는 게시글입니다.');
+          setLoading(false);
+          return;
+        }
+      }
+      
+      const response = await fetch(`/api/posts/${postId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       
       if (!response.ok) {
         throw new Error('게시글을 불러오는데 실패했습니다.');
@@ -55,41 +80,41 @@ export default function PostDetailPage() {
     });
   };
 
-  return (
-    <AdminLayout>
-      <div className="p-8">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-gray-500">로딩중...</div>
-          </div>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded p-4 text-red-700">
-            {error}
-          </div>
-        ) : post ? (
-          <div className="max-w-4xl mx-auto">
-            {/* 제목 */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6 mb-4">
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                {post.title}
-              </h1>
-              <div className="flex gap-4 text-sm text-gray-500">
-                <span>작성일: {formatDate(post.createdAt)}</span>
-                {post.updatedAt !== post.createdAt && (
-                  <span>수정일: {formatDate(post.updatedAt)}</span>
-                )}
-              </div>
+  const renderContent = () => (
+    <div className="p-8">
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-gray-500">로딩중...</div>
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 border border-red-200 rounded p-4 text-red-700">
+          {error}
+        </div>
+      ) : post ? (
+        <div className="max-w-4xl mx-auto">
+          {/* 제목 */}
+          <div className="bg-white border border-gray-200 rounded-lg p-6 mb-4">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              {post.title}
+            </h1>
+            <div className="flex gap-4 text-sm text-gray-500">
+              <span>작성일: {formatDate(post.createdAt)}</span>
+              {post.updatedAt !== post.createdAt && (
+                <span>수정일: {formatDate(post.updatedAt)}</span>
+              )}
             </div>
+          </div>
 
-            {/* 내용 */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div
-                className="prose max-w-none"
-                dangerouslySetInnerHTML={{ __html: post.content }}
-              />
-            </div>
+          {/* 내용 */}
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div
+              className="prose max-w-none"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
+          </div>
 
-            {/* 목록으로 버튼 */}
+          {/* 관리자일 경우에만 목록으로 버튼 표시 */}
+          {role === 'admin' && (
             <div className="mt-6">
               <button
                 onClick={() => router.back()}
@@ -98,13 +123,29 @@ export default function PostDetailPage() {
                 목록으로
               </button>
             </div>
-          </div>
-        ) : (
-          <div className="text-center py-12 text-gray-500">
-            게시글을 찾을 수 없습니다.
-          </div>
-        )}
-      </div>
-    </AdminLayout>
+          )}
+        </div>
+      ) : (
+        <div className="text-center py-12 text-gray-500">
+          게시글을 찾을 수 없습니다.
+        </div>
+      )}
+    </div>
   );
+
+  // role이 로드될 때까지 로딩 표시
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-600">로딩중...</div>
+      </div>
+    );
+  }
+
+  // 역할에 따라 다른 레이아웃 사용
+  if (role === 'access-key') {
+    return <AccessKeyLayout>{renderContent()}</AccessKeyLayout>;
+  }
+
+  return <AdminLayout>{renderContent()}</AdminLayout>;
 }
