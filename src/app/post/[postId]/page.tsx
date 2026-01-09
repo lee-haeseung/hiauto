@@ -1,5 +1,6 @@
 'use client';
 
+import AccessKeyManagementModal from '@/components/AccessKeyManagementModal';
 import AdminLayout from '@/components/AdminLayout';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -19,6 +20,7 @@ export default function PostDetailPage() {
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showAccessKeyModal, setShowAccessKeyModal] = useState(false);
 
   useEffect(() => {
     // 관리자 권한 확인
@@ -116,7 +118,21 @@ export default function PostDetailPage() {
               >
                 수정
               </button>
+              <button
+                onClick={() => setShowAccessKeyModal(true)}
+                className="px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+              >
+                접근 코드 관리
+              </button>
             </div>
+
+            {/* 액세스 키 관리 모달 */}
+            {showAccessKeyModal && (
+              <AccessKeyManagementModal
+                postId={parseInt(postId)}
+                onClose={() => setShowAccessKeyModal(false)}
+              />
+            )}
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500">

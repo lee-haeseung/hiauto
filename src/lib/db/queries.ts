@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { eq, sql } from 'drizzle-orm';
 import { db } from './index';
 import { accessKeys, admins, boards, posts, subBoards } from './schema';
@@ -166,3 +167,59 @@ export async function searchPosts(params: {
 
   return result;
 }
+
+// 액세스 키 관련 함수들
+
+// 특정 게시물의 액세스 키 조회 (페이지네이션)
+export async function getAccessKeysByPostId(
+  postId: number,
+  page: number = 1,
+  pageSize: number = 10
+) {
+  const offset = (page - 1) * pageSize;
+  
+  const keys = await db
+    .select()
+    .from(accessKeys)
+    .where(eq(accessKeys.postId, postId))
+    .orderBy(accessKeys.createdAt)
+    .limit(pageSize)
+    .offset(offset);
+  
+  const totalResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(accessKeys)
+    .where(eq(accessKeys.postId, postId));
+  
+  const total = Number(totalResult[0]?.count ?? 0);
+  
+  return { keys, total };
+}
+
+// 액세스 키 생성
+export async function createAccessKey(data: {
+  postId: number;
+  memo?: string;
+  expiresAt?: Date | null;
+}) {
+  // 랜덤 키 생성 (32자 hex)
+  const key = crypto.randomBytes(16).toString('hex');
+  
+  const result = await db
+    .insert(accessKeys)
+    .values({
+      key,
+      postId: data.postId,
+      memo: data.memo || null,
+      expiresAt: data.expiresAt || null,
+    })
+    .returning();
+  
+  return result[0];
+}
+
+// 액세스 키 삭제
+export async function deleteAccessKey(keyId: number) {
+  return await db.delete(accessKeys).where(eq(accessKeys.id, keyId));
+}
+
