@@ -21,24 +21,6 @@ export default function SettingsPage() {
   const [subBoards, setSubBoards] = useState<{ [key: number]: SubBoard[] }>({});
   const [expandedBoards, setExpandedBoards] = useState<{ [key: number]: boolean }>({});
 
-  useEffect(() => {
-    loadBoards();
-  }, []);
-
-  const loadBoards = async () => {
-    try {
-      const response = await fetch('/api/boards');
-      const data = await response.json();
-      setBoards(data || []);
-
-      for (const board of data) {
-        loadSubBoards(board.id);
-      }
-    } catch (error) {
-      console.error('Failed to load boards:', error);
-    }
-  };
-
   const loadSubBoards = async (boardId: number) => {
     try {
       const response = await fetch(`/api/sub-boards?boardId=${boardId}`);
@@ -48,6 +30,24 @@ export default function SettingsPage() {
       console.error(`Failed to load sub-boards for board ${boardId}:`, error);
     }
   };
+
+  useEffect(() => {
+    const loadBoards = async () => {
+      try {
+        const response = await fetch('/api/boards');
+        const data = await response.json();
+        setBoards(data || []);
+
+        for (const board of data) {
+          loadSubBoards(board.id);
+        }
+      } catch (error) {
+        console.error('Failed to load boards:', error);
+      }
+    };
+
+    loadBoards();
+  }, []);
 
   const toggleBoard = (boardId: number) => {
     setExpandedBoards((prev) => ({
@@ -72,7 +72,7 @@ export default function SettingsPage() {
         return;
       }
 
-      await loadBoards();
+      window.location.reload();
     } catch (error) {
       console.error('Failed to add board:', error);
       alert('게시판 추가 중 오류가 발생했습니다.');
@@ -95,7 +95,7 @@ export default function SettingsPage() {
         return;
       }
 
-      await loadBoards();
+      window.location.reload();
     } catch (error) {
       console.error('Failed to update board name:', error);
       alert('게시판 이름 변경 중 오류가 발생했습니다.');
@@ -122,7 +122,7 @@ export default function SettingsPage() {
         }),
       ]);
 
-      await loadBoards();
+      window.location.reload();
     } catch (error) {
       console.error('Failed to move board:', error);
       alert('게시판 순서 변경 중 오류가 발생했습니다.');
@@ -149,7 +149,7 @@ export default function SettingsPage() {
         }),
       ]);
 
-      await loadBoards();
+      window.location.reload();
     } catch (error) {
       console.error('Failed to move board:', error);
       alert('게시판 순서 변경 중 오류가 발생했습니다.');
