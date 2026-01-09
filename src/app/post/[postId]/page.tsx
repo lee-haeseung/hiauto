@@ -14,6 +14,11 @@ interface Post {
   updatedAt: string;
 }
 
+interface Board {
+  id: number;
+  name: string;
+}
+
 interface SubBoard {
   id: number;
   name: string;
@@ -25,6 +30,7 @@ export default function PostDetailPage() {
   const router = useRouter();
   const postId = params?.postId as string;
   const [post, setPost] = useState<Post | null>(null);
+  const [board, setBoard] = useState<Board | null>(null);
   const [subBoard, setSubBoard] = useState<SubBoard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -72,6 +78,23 @@ export default function PostDetailPage() {
         if (subBoardResponse.ok) {
           const subBoardData = await subBoardResponse.json();
           setSubBoard(subBoardData);
+          
+          // 게시판 정보 가져오기
+          if (subBoardData.boardId) {
+            const boardResponse = await fetch(`/api/boards`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
+            });
+            
+            if (boardResponse.ok) {
+              const boards = await boardResponse.json();
+              const foundBoard = boards.find((b: Board) => b.id === subBoardData.boardId);
+              if (foundBoard) {
+                setBoard(foundBoard);
+              }
+            }
+          }
         }
       }
     } catch (err) {
@@ -107,10 +130,10 @@ export default function PostDetailPage() {
           <div className="max-w-4xl mx-auto">
             {/* 제목 */}
             <div className="bg-white border border-gray-200 rounded-lg p-6 mb-4">
-              {subBoard && (
+              {board && subBoard && (
                 <div className="mb-3">
                   <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                    {subBoard.name}
+                    {board.name} &gt; {subBoard.name}
                   </span>
                 </div>
               )}
