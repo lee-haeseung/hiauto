@@ -1,6 +1,6 @@
 'use client';
 
-import AdminLayout from '@/components/AdminLayout';
+import AccessKeyLayout from '@/components/AccessKeyLayout';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -12,7 +12,7 @@ interface Post {
   updatedAt: string;
 }
 
-export default function PostDetailPage() {
+export default function ViewPostPage() {
   const params = useParams();
   const router = useRouter();
   const postId = params?.postId as string;
@@ -21,10 +21,20 @@ export default function PostDetailPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // 관리자 권한 확인
+    // 액세스 키 권한 확인
     const role = localStorage.getItem('role');
-    if (role !== 'admin') {
-      router.push('/login');
+    const storedPostId = localStorage.getItem('postId');
+    
+    if (role !== 'access-key') {
+      setError('접근 권한이 없습니다.');
+      setLoading(false);
+      return;
+    }
+    
+    // 액세스 키는 할당된 게시물만 조회 가능
+    if (storedPostId !== postId) {
+      setError('접근 권한이 없는 게시글입니다.');
+      setLoading(false);
       return;
     }
     
@@ -69,7 +79,7 @@ export default function PostDetailPage() {
   };
 
   return (
-    <AdminLayout>
+    <AccessKeyLayout>
       <div className="p-8">
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -101,22 +111,6 @@ export default function PostDetailPage() {
                 dangerouslySetInnerHTML={{ __html: post.content }}
               />
             </div>
-
-            {/* 버튼 그룹 */}
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => router.back()}
-                className="px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition"
-              >
-                목록으로
-              </button>
-              <button
-                onClick={() => router.push(`/write?postId=${postId}`)}
-                className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-              >
-                수정
-              </button>
-            </div>
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500">
@@ -124,6 +118,6 @@ export default function PostDetailPage() {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </AccessKeyLayout>
   );
 }

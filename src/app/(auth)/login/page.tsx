@@ -35,8 +35,8 @@ export default function LoginPage() {
       localStorage.setItem('role', data.role);
       localStorage.setItem('postId', data.postId);
 
-      // 해당 게시글로 이동
-      router.push(`/post/${data.postId}`);
+      // 액세스 키로 접근한 게시글로 이동
+      router.push(`/view/${data.postId}`);
     } catch (err) {
       setError('로그인 처리 중 오류가 발생했습니다.');
     } finally {
