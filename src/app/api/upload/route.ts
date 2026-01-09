@@ -1,3 +1,4 @@
+import { verifyAdminFromRequest } from '@/lib/auth/jwt';
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -9,6 +10,12 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    // 관리자 권한 확인
+    const authResult = await verifyAdminFromRequest(request);
+    if ('error' in authResult) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
 

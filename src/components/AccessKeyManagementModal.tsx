@@ -25,7 +25,6 @@ export default function AccessKeyManagementModal({
   const [totalPages, setTotalPages] = useState(1);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [memo, setMemo] = useState('');
-  const [expiresAt, setExpiresAt] = useState('');
   const [creating, setCreating] = useState(false);
   
   const pageSize = 10;
@@ -71,6 +70,11 @@ export default function AccessKeyManagementModal({
     try {
       setCreating(true);
       const token = localStorage.getItem('token');
+      
+      // 7일 후 만료일 계산
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+      
       const response = await fetch(`/api/admin/posts/${postId}/access-keys`, {
         method: 'POST',
         headers: {
@@ -79,7 +83,7 @@ export default function AccessKeyManagementModal({
         },
         body: JSON.stringify({
           memo,
-          expiresAt: expiresAt || null,
+          expiresAt: expiresAt.toISOString(),
         }),
       });
 
@@ -89,7 +93,6 @@ export default function AccessKeyManagementModal({
 
       alert('액세스 키가 생성되었습니다.');
       setMemo('');
-      setExpiresAt('');
       setShowCreateForm(false);
       loadAccessKeys();
     } catch (error) {
@@ -176,6 +179,9 @@ export default function AccessKeyManagementModal({
           {showCreateForm && (
             <div className="mb-6 p-4 border border-gray-300 rounded bg-gray-50">
               <h3 className="font-semibold mb-3">새 액세스 키 생성</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                생성된 액세스 키는 7일 후 자동으로 만료됩니다.
+              </p>
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium mb-1">
@@ -186,17 +192,6 @@ export default function AccessKeyManagementModal({
                     value={memo}
                     onChange={(e) => setMemo(e.target.value)}
                     placeholder="메모를 입력하세요"
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    만료일 (선택사항)
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={expiresAt}
-                    onChange={(e) => setExpiresAt(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -212,7 +207,6 @@ export default function AccessKeyManagementModal({
                     onClick={() => {
                       setShowCreateForm(false);
                       setMemo('');
-                      setExpiresAt('');
                     }}
                     className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 transition"
                   >

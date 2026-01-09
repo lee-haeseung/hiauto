@@ -1,8 +1,15 @@
+import { verifyAdminFromRequest } from '@/lib/auth/jwt';
 import { searchPosts } from '@/lib/db/queries';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
+    // 관리자 권한 확인
+    const authResult = await verifyAdminFromRequest(request);
+    if ('error' in authResult) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get('query');
     const target = searchParams.get('target') as 'title' | 'content' | 'all';

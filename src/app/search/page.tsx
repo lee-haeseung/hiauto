@@ -49,7 +49,10 @@ export default function SearchPage() {
 
   const loadBoards = async () => {
     try {
-      const response = await fetch('/api/boards');
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/boards', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const data = await response.json();
       setBoards(data || []);
     } catch (error) {
@@ -59,7 +62,10 @@ export default function SearchPage() {
 
   const loadSubBoards = async (id: number) => {
     try {
-      const response = await fetch(`/api/sub-boards?boardId=${id}`);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/sub-boards?boardId=${id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const data = await response.json();
       setSubBoards(data || []);
     } catch (error) {
@@ -87,7 +93,10 @@ export default function SearchPage() {
       if (boardId) params.append('boardId', boardId);
       if (subBoardId) params.append('subBoardId', subBoardId);
 
-      const response = await fetch(`/api/search?${params.toString()}`);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/search?${params.toString()}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       
       if (!response.ok) {
         throw new Error('검색에 실패했습니다.');

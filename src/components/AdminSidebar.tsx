@@ -25,7 +25,10 @@ export default function AdminSidebar() {
 
   const loadSubBoards = async (boardId: number) => {
     try {
-      const response = await fetch(`/api/sub-boards?boardId=${boardId}`);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/sub-boards?boardId=${boardId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const data = await response.json();
       setSubBoards((prev) => ({ ...prev, [boardId]: data }));
     } catch (error) {
@@ -35,7 +38,10 @@ export default function AdminSidebar() {
 
   const loadBoards = async () => {
     try {
-      const response = await fetch('/api/boards');
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/boards', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const data = await response.json();
       setBoards(data);
 

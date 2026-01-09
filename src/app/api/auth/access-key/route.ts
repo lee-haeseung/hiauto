@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '없거나 만료된 액세스 키입니다.' }, { status: 401 });
     }
     
-    // JWT 생성
-    const token = await createAccessKeyToken(accessKey.postId, accessKey.expiresAt || undefined);
+    // JWT 생성 (keyId, postId, expiresAt 포함)
+    const token = await createAccessKeyToken(accessKey.id, accessKey.postId, accessKey.expiresAt || undefined);
     
     return NextResponse.json({ token, role: 'access-key', postId: accessKey.postId });
   } catch (error) {

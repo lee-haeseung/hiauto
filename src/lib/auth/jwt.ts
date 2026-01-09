@@ -25,8 +25,8 @@ export async function verifyAdminToken(token: string) {
 }
 
 // 액세스 키 JWT 생성 (게시물 접근용)
-export async function createAccessKeyToken(postId: number, expiresAt?: Date) {
-  const jwt = new SignJWT({ postId, role: 'access-key' })
+export async function createAccessKeyToken(keyId: number, postId: number, expiresAt?: Date) {
+  const jwt = new SignJWT({ keyId, postId, role: 'access-key' })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt();
 
@@ -77,4 +77,56 @@ export async function verifyAccessKeyToken(token: string) {
   } catch {
     return null;
   }
+}
+
+// NextRequest에서 관리자 토큰 추출 및 검증
+export async function verifyAdminFromRequest(request: Request) {
+  const token = request.headers.get('authorization')?.replace('Bearer ', '');
+  if (!token) {
+    return { error: 'Unauthorized', status: 401 };
+  }
+
+  const payload = await verifyAdminToken(token);
+  if (!payload || payload.role !== 'admin') {
+    return { error: 'Forbidden', status: 403 };
+  }
+
+  return { payload };
+}
+
+// NextRequest에서 액세스 키 토큰 추출 및 검증
+export async function verifyAccessKeyFromRequest(request: Request) {
+  const token = request.headers.get('authorization')?.replace('Bearer ', '');
+  if (!token) {
+    return { error: 'Unauthorized', status: 401 };
+  }
+
+  const payload = await verifyAccessKeyToken(token);
+  if (!payload || payload.role !== 'access-key') {
+    return { error: 'Forbidden', status: 403 };
+  }
+
+  return { payload };
+}
+
+// NextRequest에서 관리자 또는 액세스 키 토큰 추출 및 검증
+export async function verifyAdminOrAccessKeyFromRequest(request: Request) {
+  const token = request.headers.get('authorization')?.replace('Bearer ', '');
+  if (!token) {
+    return { error: 'Unauthorized', status: 401 };
+  }
+
+  // 먼저 관리자 토큰 검증 시도
+  const adminPayload = await verifyAdminToken(token);
+  if (adminPayload && adminPayload.role === 'admin') {
+    return { payload: adminPayload, role: 'admin' };
+  }
+
+  // 관리자 토큰이 아니면 액세스 키 토큰 검증 시도
+  const accessKeyPayload = await verifyAccessKeyToken(token);
+  if (accessKeyPayload && accessKeyPayload.role === 'access-key') {
+    return { payload: accessKeyPayload, role: 'access-key' };
+  }
+
+  return { error: 'Forbidden', status: 403 };
 }

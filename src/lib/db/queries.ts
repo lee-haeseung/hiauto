@@ -99,12 +99,31 @@ export async function getAdminByUsername(username: string) {
   return result[0] || null;
 }
 
-// 액세스 키 검증
+// 액세스 키 검증 (문자열 키로 조회)
 export async function verifyAccessKey(key: string) {
   const result = await db
     .select()
     .from(accessKeys)
     .where(eq(accessKeys.key, key));
+  
+  if (!result[0]) return null;
+  
+  const accessKey = result[0];
+  
+  // 만료 확인
+  if (accessKey.expiresAt && accessKey.expiresAt < new Date()) {
+    return null;
+  }
+  
+  return accessKey;
+}
+
+// 액세스 키 검증 (ID로 조회)
+export async function getAccessKeyById(keyId: number) {
+  const result = await db
+    .select()
+    .from(accessKeys)
+    .where(eq(accessKeys.id, keyId));
   
   if (!result[0]) return null;
   

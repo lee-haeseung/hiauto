@@ -1,4 +1,4 @@
-import { verifyAdminToken } from '@/lib/auth/jwt';
+import { verifyAdminFromRequest } from '@/lib/auth/jwt';
 import { deleteAccessKey } from '@/lib/db/queries';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -9,14 +9,9 @@ export async function DELETE(
 ) {
   try {
     // 관리자 권한 확인
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const payload = await verifyAdminToken(token);
-    if (!payload || payload.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const authResult = await verifyAdminFromRequest(request);
+    if ('error' in authResult) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status });
     }
 
     const { keyId: keyIdParam } = await params;

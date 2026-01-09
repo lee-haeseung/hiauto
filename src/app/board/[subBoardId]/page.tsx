@@ -29,7 +29,10 @@ export default function BoardPage() {
   const loadPosts = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/posts?subBoardId=${subBoardId}`);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/posts?subBoardId=${subBoardId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       
       if (!response.ok) {
         throw new Error('게시글을 불러오는데 실패했습니다.');
@@ -58,7 +61,10 @@ export default function BoardPage() {
         subBoardId: subBoardId,
       });
 
-      const response = await fetch(`/api/search?${params.toString()}`);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/search?${params.toString()}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       
       if (!response.ok) {
         throw new Error('검색에 실패했습니다.');

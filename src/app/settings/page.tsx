@@ -23,7 +23,10 @@ export default function SettingsPage() {
 
   const loadSubBoards = async (boardId: number) => {
     try {
-      const response = await fetch(`/api/sub-boards?boardId=${boardId}`);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/sub-boards?boardId=${boardId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const data = await response.json();
       setSubBoards((prev) => ({ ...prev, [boardId]: data || [] }));
     } catch (error) {
@@ -34,7 +37,10 @@ export default function SettingsPage() {
   useEffect(() => {
     const loadBoards = async () => {
       try {
-        const response = await fetch('/api/boards');
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/boards', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         const data = await response.json();
         setBoards(data || []);
 
@@ -61,9 +67,13 @@ export default function SettingsPage() {
     if (!name || !name.trim()) return;
 
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch('/api/boards/manage', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ name: name.trim() }),
       });
 
@@ -84,9 +94,13 @@ export default function SettingsPage() {
     if (!name || !name.trim() || name.trim() === currentName) return;
 
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch('/api/boards/manage', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ id, name: name.trim() }),
       });
 
@@ -109,15 +123,21 @@ export default function SettingsPage() {
     const above = boards[index - 1];
 
     try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
       await Promise.all([
         fetch('/api/boards/manage', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ id: current.id, order: above.order }),
         }),
         fetch('/api/boards/manage', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ id: above.id, order: current.order }),
         }),
       ]);
@@ -136,15 +156,21 @@ export default function SettingsPage() {
     const below = boards[index + 1];
 
     try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
       await Promise.all([
         fetch('/api/boards/manage', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ id: current.id, order: below.order }),
         }),
         fetch('/api/boards/manage', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ id: below.id, order: current.order }),
         }),
       ]);
@@ -161,9 +187,13 @@ export default function SettingsPage() {
     if (!name || !name.trim()) return;
 
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch('/api/sub-boards/manage', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ boardId, name: name.trim() }),
       });
 
@@ -184,9 +214,13 @@ export default function SettingsPage() {
     if (!name || !name.trim() || name.trim() === currentName) return;
 
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch('/api/sub-boards/manage', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ id, name: name.trim() }),
       });
 
@@ -210,15 +244,21 @@ export default function SettingsPage() {
     const above = subs[index - 1];
 
     try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
       await Promise.all([
         fetch('/api/sub-boards/manage', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ id: current.id, order: above.order }),
         }),
         fetch('/api/sub-boards/manage', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ id: above.id, order: current.order }),
         }),
       ]);
@@ -238,15 +278,21 @@ export default function SettingsPage() {
     const below = subs[index + 1];
 
     try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
       await Promise.all([
         fetch('/api/sub-boards/manage', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ id: current.id, order: below.order }),
         }),
         fetch('/api/sub-boards/manage', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ id: below.id, order: current.order }),
         }),
       ]);

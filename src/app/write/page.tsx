@@ -142,7 +142,10 @@ export default function WritePage() {
 
   const loadBoards = async () => {
     try {
-      const response = await fetch('/api/boards');
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/boards', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const data = await response.json();
       setBoards(data || []);
     } catch (error) {
@@ -152,7 +155,10 @@ export default function WritePage() {
 
   const loadSubBoards = async (boardId: number) => {
     try {
-      const response = await fetch(`/api/sub-boards?boardId=${boardId}`);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/sub-boards?boardId=${boardId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const data = await response.json();
       setSubBoards(data || []);
     } catch (error) {
@@ -264,9 +270,13 @@ export default function WritePage() {
 
     setSubmitting(true);
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch('/api/posts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           subBoardId: parseInt(selectedSubBoardId),
           title,
