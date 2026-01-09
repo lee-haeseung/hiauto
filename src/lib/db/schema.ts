@@ -39,6 +39,7 @@ export const posts = pgTable('posts', {
 export const accessKeys = pgTable('access_keys', {
   id: serial('id').primaryKey(),
   key: text('key').notNull().unique(), // 실제 액세스 키 문자열
+  memo: text('memo'),
   postId: integer('post_id').references(() => posts.id).notNull(),
   expiresAt: timestamp('expires_at'), // null이면 무제한
   createdAt: timestamp('created_at').defaultNow().notNull(),
