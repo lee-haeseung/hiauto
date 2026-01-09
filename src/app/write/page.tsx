@@ -2,6 +2,7 @@
 
 import AdminLayout from '@/components/AdminLayout';
 import { File } from '@/lib/editor/File';
+import { FontSize } from '@/lib/editor/FontSize';
 import { Video } from '@/lib/editor/Video';
 import Color from '@tiptap/extension-color';
 import Image from '@tiptap/extension-image';
@@ -34,8 +35,29 @@ export default function WritePage() {
   const [title, setTitle] = useState('');
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [currentFontSize, setCurrentFontSize] = useState('16px');
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  // rem 또는 다른 단위를 px로 변환
+  const normalizeFontSize = (size: string | null): string => {
+    if (!size) return '16px';
+    
+    // 이미 px 단위면 그대로 반환
+    if (size.endsWith('px')) return size;
+    
+    // rem 단위 변환 (1rem = 16px 기준)
+    if (size.endsWith('rem')) {
+      const remValue = parseFloat(size);
+      return `${Math.round(remValue * 16)}px`;
+    }
+    
+    // em 단위 변환 (1em = 16px 기준)
+    if (size.endsWith('em')) {
+      const emValue = parseFloat(size);
+      return `${Math.round(emValue * 16)}px`;
+    }
+    
+    return size;
+  };
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -57,14 +79,23 @@ export default function WritePage() {
       }),
       Underline,
       TextStyle,
+      FontSize,
       Color,
     ],
-    content: '<p>내용을 입력해주세요.</p>',
+    content: '<p style="font-size: 16px">내용을 입력해주세요.</p>',
     immediatelyRender: false,
     editorProps: {
       attributes: {
         class: 'prose prose-sm sm:prose lg:prose-lg max-w-none focus:outline-none min-h-[500px] p-6',
       },
+    },
+    onUpdate: ({ editor }) => {
+      const fontSize = editor.getAttributes('textStyle').fontSize;
+      setCurrentFontSize(normalizeFontSize(fontSize));
+    },
+    onSelectionUpdate: ({ editor }) => {
+      const fontSize = editor.getAttributes('textStyle').fontSize;
+      setCurrentFontSize(normalizeFontSize(fontSize));
     },
   });
 
@@ -267,6 +298,18 @@ export default function WritePage() {
           {/* 에디터 */}
           <div>
             <label className="block text-sm font-medium mb-2">내용 *</label>
+            
+            {/* 디버깅 정보 */}
+            {editor && (
+              <div className="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                <strong>디버깅 정보:</strong>
+                <div>현재 노드: {editor.state.selection.$head.parent.type.name}</div>
+                <div>textStyle 속성: {JSON.stringify(editor.getAttributes('textStyle'))}</div>
+                <div>heading 활성: {editor.isActive('heading') ? `level ${editor.getAttributes('heading').level}` : 'No'}</div>
+                <div>현재 fontSize: {currentFontSize || '없음'}</div>
+              </div>
+            )}
+
             <div className="border border-gray-300 rounded-lg bg-white shadow-sm overflow-hidden">
               {/* 툴바 */}
               {editor && (
@@ -311,34 +354,51 @@ export default function WritePage() {
                     </button>
                   </div>
 
-                  {/* 제목 */}
+                  {/* 글자 크기 */}
                   <div className="flex gap-1 pr-2 border-r border-gray-300">
-                    <button
-                      onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                      className={`px-3 py-2 rounded hover:bg-gray-200 transition ${
-                        editor.isActive('heading', { level: 1 }) ? 'bg-blue-100 text-blue-700' : ''
-                      }`}
-                      title="제목 1"
+                    <select
+                      value={currentFontSize}
+                      onChange={(e) => {
+                        const size = e.target.value;
+                        if (size) {
+                          editor.chain().focus().setFontSize(size).run();
+                        } else {
+                          editor.chain().focus().unsetFontSize().run();
+                        }
+                      }}
+                      className="px-2 py-1 border rounded text-sm hover:bg-gray-100"
+                      title="글자 크기"
                     >
-                      H1
-                    </button>
+                      <option value="">크기</option>
+                      <option value="12px">12px</option>
+                      <option value="14px">14px</option>
+                      <option value="16px">16px</option>
+                      <option value="18px">18px</option>
+                      <option value="20px">20px</option>
+                      <option value="24px">24px</option>
+                      <option value="28px">28px</option>
+                      <option value="32px">32px</option>
+                      <option value="36px">36px</option>
+                      {currentFontSize && !['', '12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px'].includes(currentFontSize) && (
+                        <option value={currentFontSize}>{currentFontSize}</option>
+                      )}
+                    </select>
+                  </div>
+
+                  {/* 글자 색상 */}
+                  <div className="flex gap-1 pr-2 border-r border-gray-300">
+                    <input
+                      type="color"
+                      onChange={(e) => editor.chain().focus().setColor(e.target.value).run()}
+                      className="w-10 h-8 border rounded cursor-pointer"
+                      title="글자 색상"
+                    />
                     <button
-                      onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                      className={`px-3 py-2 rounded hover:bg-gray-200 transition ${
-                        editor.isActive('heading', { level: 2 }) ? 'bg-blue-100 text-blue-700' : ''
-                      }`}
-                      title="제목 2"
+                      onClick={() => editor.chain().focus().unsetColor().run()}
+                      className="px-2 py-1 border rounded text-xs hover:bg-gray-200 transition"
+                      title="색상 제거"
                     >
-                      H2
-                    </button>
-                    <button
-                      onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                      className={`px-3 py-2 rounded hover:bg-gray-200 transition ${
-                        editor.isActive('heading', { level: 3 }) ? 'bg-blue-100 text-blue-700' : ''
-                      }`}
-                      title="제목 3"
-                    >
-                      H3
+                      초기화
                     </button>
                   </div>
 
