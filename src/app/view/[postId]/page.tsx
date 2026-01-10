@@ -95,6 +95,12 @@ export default function ViewPostPage() {
               },
             });
             
+            if (boardResponse.status === 401 || boardResponse.status === 403) {
+              localStorage.removeItem('token');
+              window.location.href = '/login';
+              return;
+            }
+            
             if (boardResponse.ok) {
               const boards = await boardResponse.json();
               const foundBoard = boards.find((b: Board) => b.id === subBoardData.boardId);

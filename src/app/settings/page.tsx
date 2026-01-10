@@ -41,6 +41,13 @@ export default function SettingsPage() {
         const response = await fetch('/api/boards', {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
+        
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+          return;
+        }
+        
         const data = await response.json();
         setBoards(data || []);
 
