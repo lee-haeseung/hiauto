@@ -22,7 +22,6 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ token, role: 'access-key', postId: accessKey.postId });
   } catch (error) {
-    console.error('Error during access key verification:', error);
     return NextResponse.json({ error: '검증에 실패했습니다.' }, { status: 500 });
   }
 }

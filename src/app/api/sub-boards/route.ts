@@ -31,7 +31,6 @@ export async function GET(request: NextRequest) {
     const subBoards = await getSubBoardsByBoardId(parseInt(boardId));
     return NextResponse.json(subBoards);
   } catch (error) {
-    console.error('Error fetching sub-boards:', error);
     return NextResponse.json({ error: 'Failed to fetch sub-boards' }, { status: 500 });
   }
 }

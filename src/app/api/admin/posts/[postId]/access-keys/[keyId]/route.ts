@@ -25,7 +25,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting access key:', error);
     return NextResponse.json(
       { error: 'Failed to delete access key' },
       { status: 500 }

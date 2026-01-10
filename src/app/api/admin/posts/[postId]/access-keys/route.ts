@@ -1,7 +1,7 @@
 import { verifyAdminFromRequest } from '@/lib/auth/jwt';
 import {
-  createAccessKey,
-  getAccessKeysByPostId,
+    createAccessKey,
+    getAccessKeysByPostId,
 } from '@/lib/db/queries';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -33,7 +33,6 @@ export async function GET(
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Error fetching access keys:', error);
     return NextResponse.json(
       { error: 'Failed to fetch access keys' },
       { status: 500 }
@@ -83,7 +82,6 @@ export async function POST(
 
     return NextResponse.json(accessKey, { status: 201 });
   } catch (error) {
-    console.error('Error creating access key:', error);
     return NextResponse.json(
       { error: 'Failed to create access key' },
       { status: 500 }

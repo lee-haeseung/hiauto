@@ -33,7 +33,6 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({ token, role: 'admin' });
   } catch (error) {
-    console.error('Error during admin login:', error);
     return NextResponse.json({ error: 'Login failed' }, { status: 500 });
   }
 }

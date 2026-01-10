@@ -19,7 +19,6 @@ export async function POST(request: NextRequest) {
     const newBoard = await createBoard(name);
     return NextResponse.json(newBoard, { status: 201 });
   } catch (error) {
-    console.error('Error creating board:', error);
     return NextResponse.json({ error: 'Failed to create board' }, { status: 500 });
   }
 }
@@ -48,7 +47,6 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error updating board:', error);
     return NextResponse.json({ error: 'Failed to update board' }, { status: 500 });
   }
 }
@@ -71,7 +69,6 @@ export async function DELETE(request: NextRequest) {
     await deleteBoard(parseInt(id));
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting board:', error);
     return NextResponse.json({ error: 'Failed to delete board' }, { status: 500 });
   }
 }

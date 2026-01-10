@@ -39,7 +39,6 @@ export async function POST(request: NextRequest) {
       });
 
     if (error) {
-      console.error('Supabase upload error:', error);
       return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
     }
 
@@ -54,7 +53,6 @@ export async function POST(request: NextRequest) {
       filePath: filePath,
     });
   } catch (error) {
-    console.error('Upload error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

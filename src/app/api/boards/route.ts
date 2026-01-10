@@ -13,7 +13,6 @@ export async function GET(request: NextRequest) {
     const boards = await getAllBoards();
     return NextResponse.json(boards);
   } catch (error) {
-    console.error('Error fetching boards:', error);
     return NextResponse.json({ error: 'Failed to fetch boards' }, { status: 500 });
   }
 }

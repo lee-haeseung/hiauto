@@ -22,7 +22,6 @@ export async function POST(request: NextRequest) {
     const newSubBoard = await createSubBoard(boardId, name);
     return NextResponse.json(newSubBoard, { status: 201 });
   } catch (error) {
-    console.error('Error creating sub-board:', error);
     return NextResponse.json({ error: 'Failed to create sub-board' }, { status: 500 });
   }
 }
@@ -51,7 +50,6 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error updating sub-board:', error);
     return NextResponse.json({ error: 'Failed to update sub-board' }, { status: 500 });
   }
 }
@@ -74,7 +72,6 @@ export async function DELETE(request: NextRequest) {
     await deleteSubBoard(parseInt(id));
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting sub-board:', error);
     return NextResponse.json({ error: 'Failed to delete sub-board' }, { status: 500 });
   }
 }

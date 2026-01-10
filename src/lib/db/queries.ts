@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, ilike, inArray, or, sql } from 'drizzle-orm';
 import { db } from './index';
 import { accessKeys, admins, boards, posts, subBoards } from './schema';
 
@@ -171,15 +171,20 @@ export async function searchPosts(params: {
 
   let whereConditions: any[] = [];
 
-  // 검색 대상에 따른 조건
+  // 검색 대상에 따른 조건 (ilike 함수 사용으로 파라미터 바인딩 적용)
+  const searchPattern = `%${query}%`;
+  
   if (target === 'title') {
-    whereConditions.push(sql`${posts.title} ILIKE ${`%${query}%`}`);
+    whereConditions.push(ilike(posts.title, searchPattern));
   } else if (target === 'content') {
-    whereConditions.push(sql`${posts.content} ILIKE ${`%${query}%`}`);
+    whereConditions.push(ilike(posts.content, searchPattern));
   } else {
     // 전체 검색
     whereConditions.push(
-      sql`(${posts.title} ILIKE ${`%${query}%`} OR ${posts.content} ILIKE ${`%${query}%`})`
+      or(
+        ilike(posts.title, searchPattern),
+        ilike(posts.content, searchPattern)
+      )
     );
   }
 
@@ -191,7 +196,7 @@ export async function searchPosts(params: {
     const boardSubBoards = await getSubBoardsByBoardId(boardId);
     const subBoardIds = boardSubBoards.map(sb => sb.id);
     if (subBoardIds.length > 0) {
-      whereConditions.push(sql`${posts.subBoardId} IN ${subBoardIds}`);
+      whereConditions.push(inArray(posts.subBoardId, subBoardIds));
     }
   }
 
@@ -203,7 +208,7 @@ export async function searchPosts(params: {
       createdAt: posts.createdAt,
     })
     .from(posts)
-    .where(whereConditions.length > 0 ? sql`${sql.join(whereConditions, sql` AND `)}` : undefined)
+    .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
     .orderBy(posts.createdAt)
     .limit(100);
 
