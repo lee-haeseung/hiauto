@@ -13,7 +13,7 @@ import Underline from '@tiptap/extension-underline';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import 'tippy.js/dist/tippy.css';
 
 interface Board {
@@ -27,7 +27,7 @@ interface SubBoard {
   name: string;
 }
 
-export default function WritePage() {
+function WritePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const postId = searchParams.get('postId');
@@ -739,5 +739,21 @@ export default function WritePage() {
         )}
       </div>
     </AdminLayout>
+  );
+}
+
+export default function WritePage() {
+  return (
+    <Suspense fallback={
+      <AdminLayout>
+        <div className="p-8 max-w-5xl mx-auto">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-gray-500">로딩 중...</div>
+          </div>
+        </div>
+      </AdminLayout>
+    }>
+      <WritePageContent />
+    </Suspense>
   );
 }
