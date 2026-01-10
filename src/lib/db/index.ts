@@ -4,10 +4,16 @@ import * as schema from './schema';
 
 const connectionString = process.env.DATABASE_URL!;
 
-// Serverless 환경을 위한 설정
+// Supabase Session Pooler 최적 설정
 const client = postgres(connectionString, { 
-  prepare: process.env.DB_PREPARE === 'true',
-  max: parseInt(process.env.DB_MAX_CONNECTIONS || '1'), // Vercel Serverless 최적화
+  max: 10, // Session Pooler는 더 많은 연결 허용
+  idle_timeout: 20,
+  connect_timeout: 10,
+  ssl: 'require', // SSL 필수
 });
 
 export const db = drizzle(client, { schema });
+
+export async function closeConnection() {
+  await client.end({ timeout: 5 });
+}

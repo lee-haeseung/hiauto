@@ -15,6 +15,13 @@
       "when": 1767706112818,
       "tag": "0001_unknown_jane_foster",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1768015729112,
+      "tag": "0002_nappy_magus",
+      "breakpoints": true
     }
   ]
 }
