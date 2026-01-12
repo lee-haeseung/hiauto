@@ -309,7 +309,7 @@ export default function FeedbackSection({ postId }: FeedbackSectionProps) {
                   <div>
                     <span className="font-medium text-gray-700">상세 내용:</span>
                     <div
-                      className="mt-2 prose prose-sm max-w-none p-3 bg-white rounded border border-gray-200"
+                      className="mt-2 prose prose-sm sm:prose lg:prose-lg max-w-none p-3 bg-white rounded border border-gray-200 post-content"
                       dangerouslySetInnerHTML={{ __html: feedback.description }}
                     />
                   </div>
