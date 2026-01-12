@@ -3,6 +3,7 @@
 import AccessKeyLayout from '@/components/AccessKeyLayout';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { apiGet } from '@/lib/api/client';
 
 interface Post {
   id: number;
@@ -62,17 +63,7 @@ export default function ViewPostPage() {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`/api/posts/${postId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('게시글을 불러오는데 실패했습니다.');
-      }
-      
-      const data = await response.json();
+      const data = await apiGet<Post>(`/api/posts/${postId}`, token || undefined);
       setPost(data);
       
       // 하위 게시판 정보 가져오기

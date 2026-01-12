@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { apiPost } from '@/lib/api/client';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,28 +16,20 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/access-key', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: accessKey }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || '잘못된 액세스 키입니다.');
-        return;
-      }
+      const data = await apiPost<{ token: string; role: string; postId: number }>(
+        '/api/auth/access-key',
+        { key: accessKey }
+      );
 
       // JWT 토큰 저장
       localStorage.setItem('token', data.token);
       localStorage.setItem('role', data.role);
-      localStorage.setItem('postId', data.postId);
+      localStorage.setItem('postId', data.postId.toString());
 
       // 액세스 키로 접근한 게시글로 이동
       router.push(`/view/${data.postId}`);
     } catch (err) {
-      setError('로그인 처리 중 오류가 발생했습니다.');
+      setError(err instanceof Error ? err.message : '로그인 처리 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }

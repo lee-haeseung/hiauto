@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { apiPost } from '@/lib/api/client';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -16,24 +17,16 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/admin-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || '로그인에 실패했습니다.');
-        return;
-      }
+      const data = await apiPost<{ token: string; role: string }>(
+        '/api/auth/admin-login',
+        { username, password }
+      );
 
       console.log('로그인 성공:', data);
 
       // JWT 토큰 저장
-      localStorage.setItem('token', data.data.token);
-      localStorage.setItem('role', data.data.role);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('role', data.role);
 
       console.log('localStorage 저장 완료:', {
         token: localStorage.getItem('token'),
@@ -43,7 +36,7 @@ export default function AdminLoginPage() {
       // 관리자 페이지로 이동
       router.push('/admin');
     } catch (err) {
-      setError('로그인 처리 중 오류가 발생했습니다.');
+      setError(err instanceof Error ? err.message : '로그인 처리 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
