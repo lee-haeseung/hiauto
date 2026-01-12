@@ -1,4 +1,4 @@
-import { integer, json, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, json, pgTable, serial, text, timestamp, varchar } from 'drizzle-orm/pg-core';
 
 // 관리자 테이블
 export const admins = pgTable('admins', {
@@ -39,21 +39,23 @@ export const posts = pgTable('posts', {
 export const accessKeys = pgTable('access_keys', {
   id: serial('id').primaryKey(),
   key: text('key').notNull().unique(), // 실제 액세스 키 문자열
-  memo: text('memo'),
+  memo: varchar('memo', { length: 255 }).default(''),
   postId: integer('post_id').references(() => posts.id).notNull(),
-  expiresAt: timestamp('expires_at'), // null이면 무제한
+  expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-// 파일 메타데이터 테이블 (Supabase Storage 파일 추적용)
-export const files = pgTable('files', {
+// 게시물 피드백/신고 테이블
+export const issueReports = pgTable('issue_reports', {
   id: serial('id').primaryKey(),
-  filename: text('filename').notNull(),
-  storagePath: text('storage_path').notNull(), // Supabase Storage 경로
-  mimeType: text('mime_type').notNull(),
-  size: integer('size').notNull(), // bytes
-  postId: integer('post_id').references(() => posts.id),
-  uploadedAt: timestamp('uploaded_at').defaultNow().notNull(),
+  postId: integer('post_id').references(() => posts.id).notNull(),
+  accessKeyId: integer('access_key_id').notNull(),
+  accessKeyMemo: text('access_key_memo'),
+  phone: varchar('phone', { length: 20 }).default(''),
+  isSolved: boolean('is_solved').default(false).notNull(),
+  description: text('description'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // 기타 정책 테이블
