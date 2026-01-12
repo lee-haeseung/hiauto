@@ -45,8 +45,8 @@ export const accessKeys = pgTable('access_keys', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-// 게시물 피드백/신고 테이블
-export const issueReports = pgTable('issue_reports', {
+// 게시물 피드백 테이블
+export const feedbacks = pgTable('feedbacks', {
   id: serial('id').primaryKey(),
   postId: integer('post_id').references(() => posts.id).notNull(),
   accessKeyId: integer('access_key_id').notNull(),
