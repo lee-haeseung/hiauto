@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { and, eq, ilike, inArray, or, sql } from 'drizzle-orm';
 import { db } from './index';
-import { accessKeys, admins, boards, posts, subBoards } from './schema';
+import { accessKeys, admins, boards, feedbacks, posts, subBoards } from './schema';
 
 // Boards 조회
 export async function getAllBoards() {
@@ -169,7 +169,7 @@ export async function searchPosts(params: {
 }) {
   const { query, target, boardId, subBoardId } = params;
 
-  let whereConditions: any[] = [];
+  const whereConditions: any[] = [];
 
   // 검색 대상에 따른 조건 (ilike 함수 사용으로 파라미터 바인딩 적용)
   const searchPattern = `%${query}%`;
@@ -252,14 +252,19 @@ export async function createAccessKey(data: {
   // 랜덤 키 생성 (32자 hex)
   const key = crypto.randomBytes(16).toString('hex');
   
+  const values: any = {
+    key,
+    postId: data.postId,
+    memo: data.memo || undefined,
+  };
+  
+  if (data.expiresAt) {
+    values.expiresAt = data.expiresAt;
+  }
+  
   const result = await db
     .insert(accessKeys)
-    .values({
-      key,
-      postId: data.postId,
-      memo: data.memo || null,
-      expiresAt: data.expiresAt || null,
-    })
+    .values(values)
     .returning();
   
   return result[0];
@@ -269,4 +274,238 @@ export async function createAccessKey(data: {
 export async function deleteAccessKey(keyId: number) {
   return await db.delete(accessKeys).where(eq(accessKeys.id, keyId));
 }
+
+// 액세스 키 수정 (메모, 만료일)
+export async function updateAccessKey(keyId: number, data: {
+  memo?: string;
+  expiresAt?: Date | null;
+}) {
+  const updateData: any = {};
+  
+  if (data.memo !== undefined) {
+    updateData.memo = data.memo;
+  }
+  
+  if (data.expiresAt !== undefined) {
+    updateData.expiresAt = data.expiresAt || undefined;
+  }
+  
+  const result = await db
+    .update(accessKeys)
+    .set(updateData)
+    .where(eq(accessKeys.id, keyId))
+    .returning();
+  return result[0];
+}
+
+// 모든 액세스 키 조회 (필터링)
+export async function getAllAccessKeys(params?: {
+  postId?: number;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  const { postId, search, page = 1, pageSize = 20 } = params || {};
+  const offset = (page - 1) * pageSize;
+
+  const whereConditions: any[] = [];
+
+  if (postId) {
+    whereConditions.push(eq(accessKeys.postId, postId));
+  }
+
+  if (search) {
+    const searchPattern = `%${search}%`;
+    whereConditions.push(
+      or(
+        ilike(accessKeys.key, searchPattern),
+        ilike(accessKeys.memo, searchPattern)
+      )
+    );
+  }
+
+  const keys = await db
+    .select()
+    .from(accessKeys)
+    .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+    .orderBy(accessKeys.createdAt)
+    .limit(pageSize)
+    .offset(offset);
+
+  const totalResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(accessKeys)
+    .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+
+  const total = Number(totalResult[0]?.count ?? 0);
+
+  return { keys, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
+}
+
+// ==================== 피드백 관련 함수 ====================
+
+// 피드백 생성
+export async function createFeedback(data: {
+  postId: number;
+  accessKeyId: number;
+  accessKeyMemo: string | null;
+  phone?: string;
+  isSolved?: boolean;
+  description?: string;
+}) {
+  const result = await db.insert(feedbacks).values(data).returning();
+  return result[0];
+}
+
+// 피드백 조회 (ID로)
+export async function getFeedbackById(feedbackId: number) {
+  const result = await db.select().from(feedbacks).where(eq(feedbacks.id, feedbackId));
+  return result[0] || null;
+}
+
+// 피드백 수정
+export async function updateFeedback(feedbackId: number, data: {
+  phone?: string;
+  isSolved?: boolean;
+  description?: string;
+}) {
+  const result = await db
+    .update(feedbacks)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(feedbacks.id, feedbackId))
+    .returning();
+  return result[0];
+}
+
+// 특정 게시물의 피드백 목록 조회
+export async function getFeedbacksByPostId(postId: number) {
+  return await db.select().from(feedbacks).where(eq(feedbacks.postId, postId)).orderBy(feedbacks.createdAt);
+}
+
+// 특정 accessKey의 피드백 조회
+export async function getFeedbackByAccessKeyId(accessKeyId: number) {
+  const result = await db.select().from(feedbacks).where(eq(feedbacks.accessKeyId, accessKeyId));
+  return result[0] || null;
+}
+
+// 모든 피드백 조회 (관리자용, 필터링)
+export async function getAllFeedbacks(params?: {
+  postId?: number;
+  isSolved?: boolean;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  const { postId, isSolved, search, page = 1, pageSize = 20 } = params || {};
+  const offset = (page - 1) * pageSize;
+
+  const whereConditions: any[] = [];
+
+  if (postId !== undefined) {
+    whereConditions.push(eq(feedbacks.postId, postId));
+  }
+
+  if (isSolved !== undefined) {
+    whereConditions.push(eq(feedbacks.isSolved, isSolved));
+  }
+
+  if (search) {
+    const searchPattern = `%${search}%`;
+    whereConditions.push(
+      or(
+        ilike(feedbacks.phone, searchPattern),
+        ilike(feedbacks.description, searchPattern),
+        ilike(feedbacks.accessKeyMemo, searchPattern)
+      )
+    );
+  }
+
+  const items = await db
+    .select()
+    .from(feedbacks)
+    .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+    .orderBy(feedbacks.createdAt)
+    .limit(pageSize)
+    .offset(offset);
+
+  const totalResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(feedbacks)
+    .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+
+  const total = Number(totalResult[0]?.count ?? 0);
+
+  return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
+}
+
+// 피드백 해결 비율 조회 (전체 또는 특정 게시물)
+export async function getFeedbackSummary(postId?: number) {
+  const whereCondition = postId ? eq(feedbacks.postId, postId) : undefined;
+
+  const totalResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(feedbacks)
+    .where(whereCondition);
+
+  const solvedResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(feedbacks)
+    .where(whereCondition ? and(whereCondition, eq(feedbacks.isSolved, true)) : eq(feedbacks.isSolved, true));
+
+  const total = Number(totalResult[0]?.count ?? 0);
+  const solved = Number(solvedResult[0]?.count ?? 0);
+  const solveRate = total > 0 ? (solved / total) * 100 : 0;
+
+  return { total, solved, unsolved: total - solved, solveRate: parseFloat(solveRate.toFixed(2)) };
+}
+
+// 모든 게시물 조회 (관리자용, 필터링)
+export async function getAllPosts(params?: {
+  subBoardId?: number;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  const { subBoardId, search, page = 1, pageSize = 20 } = params || {};
+  const offset = (page - 1) * pageSize;
+
+  const whereConditions: any[] = [];
+
+  if (subBoardId) {
+    whereConditions.push(eq(posts.subBoardId, subBoardId));
+  }
+
+  if (search) {
+    const searchPattern = `%${search}%`;
+    whereConditions.push(
+      or(
+        ilike(posts.title, searchPattern),
+        ilike(posts.content, searchPattern)
+      )
+    );
+  }
+
+  const items = await db
+    .select()
+    .from(posts)
+    .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+    .orderBy(posts.createdAt)
+    .limit(pageSize)
+    .offset(offset);
+
+  const totalResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(posts)
+    .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+
+  const total = Number(totalResult[0]?.count ?? 0);
+
+  return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
+}
+
+// 모든 서브게시판 조회
+export async function getAllSubBoards() {
+  return await db.select().from(subBoards).orderBy(subBoards.boardId, subBoards.order);
+}
+
 

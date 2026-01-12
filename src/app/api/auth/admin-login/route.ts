@@ -1,38 +1,37 @@
 import { createAdminToken } from '@/lib/auth/jwt';
 import { verifyPassword } from '@/lib/auth/password';
+import { successResponse, errorResponse, unauthorizedResponse, serverErrorResponse } from '@/lib/api/response';
 import { getAdminByUsername } from '@/lib/db/queries';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
     const { username, password } = await request.json();
     
     if (!username || !password) {
-      return NextResponse.json(
-        { error: 'Username and password are required' },
-        { status: 400 }
-      );
+      return errorResponse('아이디와 비밀번호를 입력해주세요');
     }
     
     // 관리자 조회
     const admin = await getAdminByUsername(username);
     
     if (!admin) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+      return unauthorizedResponse('아이디 또는 비밀번호가 일치하지 않습니다');
     }
     
     // 비밀번호 검증
     const isValid = await verifyPassword(password, admin.passwordHash);
     
     if (!isValid) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+      return unauthorizedResponse('아이디 또는 비밀번호가 일치하지 않습니다');
     }
     
     // JWT 생성
     const token = await createAdminToken(admin.id, admin.username);
     
-    return NextResponse.json({ token, role: 'admin' });
+    return successResponse({ token, role: 'admin', username: admin.username });
   } catch (error) {
-    return NextResponse.json({ error: 'Login failed' }, { status: 500 });
+    console.error('Admin login error:', error);
+    return serverErrorResponse('로그인에 실패했습니다');
   }
 }
