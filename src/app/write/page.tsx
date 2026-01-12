@@ -295,14 +295,6 @@ function WritePageContent() {
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
   };
 
-  const openLink = () => {
-    if (!editor) return;
-    const { href } = editor.getAttributes('link');
-    if (href) {
-      window.open(href, '_blank');
-    }
-  };
-
   const copyLink = () => {
     if (!editor) return;
     const { href } = editor.getAttributes('link');
@@ -659,13 +651,13 @@ function WritePageContent() {
                 </div>
               )}
               {/* 에디터 컨텐츠 */}
-              <EditorContent editor={editor} className="min-h-[500px]" />
+              <EditorContent editor={editor} className="min-h-125" />
             </div>
             
             {/* 링크 팝오버 - 에디터 외부에 배치 */}
             {showLinkPopover && editor && editor.isActive('link') && (
               <div 
-                className="link-popover fixed z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-[350px]"
+                className="link-popover fixed z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-3 w-87.5"
                 style={{ top: `${linkPopoverPosition.top + 5}px`, left: `${linkPopoverPosition.left}px` }}
               >
                 <div className="flex flex-col gap-2">

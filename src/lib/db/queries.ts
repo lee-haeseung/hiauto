@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { and, eq, ilike, inArray, or, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
 import { db } from './index';
 import { accessKeys, admins, boards, feedbacks, posts, subBoards } from './schema';
 
@@ -513,7 +513,7 @@ export async function getAllPosts(params?: {
     })
     .from(posts)
     .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-    .orderBy(posts.createdAt)
+    .orderBy(desc(posts.createdAt))
     .limit(pageSize)
     .offset(offset);
 

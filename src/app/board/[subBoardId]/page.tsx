@@ -3,6 +3,7 @@
 import AdminLayout from '@/components/AdminLayout';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { apiGet } from '@/lib/api/client';
 
 interface Post {
   id: number;
@@ -10,37 +11,53 @@ interface Post {
   createdAt: string;
 }
 
+interface PostsResponse {
+  items: Post[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export default function BoardPage() {
   const params = useParams();
   const subBoardId = params?.subBoardId as string;
   const [posts, setPosts] = useState<Post[]>([]);
-  const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTarget, setSearchTarget] = useState<'all' | 'title' | 'content'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     if (subBoardId) {
       loadPosts();
     }
-  }, [subBoardId]);
+  }, [subBoardId, currentPage, pageSize]);
 
   const loadPosts = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/posts?subBoardId=${subBoardId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      const params = new URLSearchParams({
+        subBoardId: subBoardId,
+        page: currentPage.toString(),
+        pageSize: pageSize.toString(),
       });
-      
-      if (!response.ok) {
-        throw new Error('게시글을 불러오는데 실패했습니다.');
+      if (searchQuery.trim()) {
+        params.append('query', searchQuery);
+        params.append('target', searchTarget);
       }
-      
-      const data = await response.json();
-      setAllPosts(data);
-      setPosts(data);
+      const data = await apiGet<PostsResponse>(
+        `/api/admin/posts?${params.toString()}`,
+        token || undefined
+      );
+      setPosts(data.items);
+      setTotal(data.total);
+      setTotalPages(data.totalPages);
     } catch (err) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
     } finally {
@@ -49,39 +66,48 @@ export default function BoardPage() {
   };
 
   const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      setPosts(allPosts);
-      return;
-    }
-
-    try {
-      const params = new URLSearchParams({
-        query: searchQuery,
-        target: searchTarget,
-        subBoardId: subBoardId,
-      });
-
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/search?${params.toString()}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      
-      if (!response.ok) {
-        throw new Error('검색에 실패했습니다.');
-      }
-
-      const data = await response.json();
-      setPosts(data);
-    } catch (error) {
-      console.error('Search error:', error);
-      alert('검색 중 오류가 발생했습니다.');
-    }
+    setCurrentPage(1); // 검색 시 1페이지로 리셋
+    loadPosts();
   };
 
   const handleReset = () => {
     setSearchQuery('');
     setSearchTarget('all');
-    setPosts(allPosts);
+    setCurrentPage(1);
+    loadPosts();
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(1); // 페이지 사이즈 변경 시 1페이지로
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const renderPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    const endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+    if (endPage - startPage < maxVisible - 1) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`px-3 py-1 border ${i === currentPage ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+        >
+          {i}
+        </button>
+      );
+    }
+    return pages;
   };
 
   const formatDate = (dateString: string) => {
@@ -127,6 +153,26 @@ export default function BoardPage() {
           <button onClick={handleReset} className="px-4 py-2 bg-gray-400 text-white">
             초기화
           </button>
+        </div>
+
+        {/* 페이지네이션 정보 */}
+        <div className="mb-4 flex items-center justify-between">
+          <div className="text-base text-gray-700">
+            전체개수: <span className="font-semibold">{total}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">노출개수:</span>
+            <select
+              value={pageSize}
+              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+              className="px-3 py-1 border rounded"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
         </div>
 
         {loading ? (
@@ -177,6 +223,27 @@ export default function BoardPage() {
                 ))}
               </tbody>
             </table>
+
+            {/* 페이지네이션 */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 py-4 border-t">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  이전
+                </button>
+                {renderPageNumbers()}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  다음
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

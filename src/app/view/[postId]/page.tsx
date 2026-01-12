@@ -157,7 +157,7 @@ export default function ViewPostPage() {
             {/* 내용 */}
             <div className="border border-gray-300 rounded-lg bg-white shadow-sm overflow-hidden">
               <div
-                className="prose prose-sm sm:prose lg:prose-lg max-w-none focus:outline-none min-h-[500px] p-6 post-content"
+                className="prose prose-sm sm:prose lg:prose-lg max-w-none focus:outline-none min-h-125 p-6 post-content"
                 dangerouslySetInnerHTML={{ __html: post.content }}
               />
             </div>
