@@ -34,8 +34,25 @@ export async function apiFetch<T>(
     headers: requestHeaders,
   });
 
+  // 응답 본문이 없는 경우 처리 (204 No Content 등)
+  const contentType = response.headers.get('content-type');
+  if (!contentType || !contentType.includes('application/json')) {
+    if (!response.ok) {
+      throw new Error(`API 요청 실패: ${response.status}`);
+    }
+    return undefined as T;
+  }
+
   // 응답 파싱
-  const result: ApiResponse<T> = await response.json();
+  const text = await response.text();
+  if (!text) {
+    if (!response.ok) {
+      throw new Error(`API 요청 실패: ${response.status}`);
+    }
+    return undefined as T;
+  }
+
+  const result: ApiResponse<T> = JSON.parse(text);
 
   // 에러 처리
   if (!response.ok || !result.success) {
