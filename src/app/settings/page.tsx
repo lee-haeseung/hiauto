@@ -24,7 +24,7 @@ export default function SettingsPage() {
   const loadSubBoards = async (boardId: number) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/sub-boards?boardId=${boardId}`, {
+      const response = await fetch(`/admin/sub-boards?boardId=${boardId}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await response.json();
@@ -38,7 +38,7 @@ export default function SettingsPage() {
     const loadBoards = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch('/api/boards', {
+        const response = await fetch('/admin/boards', {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         
@@ -75,7 +75,7 @@ export default function SettingsPage() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/boards/manage', {
+      const response = await fetch('/admin/boards', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,13 +102,13 @@ export default function SettingsPage() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/boards/manage', {
+      const response = await fetch(`/admin/boards/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ id, name: name.trim() }),
+        body: JSON.stringify({ name: name.trim() }),
       });
 
       if (!response.ok) {
@@ -137,15 +137,10 @@ export default function SettingsPage() {
       };
 
       await Promise.all([
-        fetch('/api/boards/manage', {
+        fetch('/admin/boards', {
           method: 'PATCH',
           headers,
-          body: JSON.stringify({ id: current.id, order: above.order }),
-        }),
-        fetch('/api/boards/manage', {
-          method: 'PATCH',
-          headers,
-          body: JSON.stringify({ id: above.id, order: current.order }),
+          body: JSON.stringify({ boards: [{ id: current.id, order: above.order }, { id: above.id, order: current.order }] }),
         }),
       ]);
 
@@ -170,15 +165,10 @@ export default function SettingsPage() {
       };
 
       await Promise.all([
-        fetch('/api/boards/manage', {
+        fetch('/admin/boards', {
           method: 'PATCH',
           headers,
-          body: JSON.stringify({ id: current.id, order: below.order }),
-        }),
-        fetch('/api/boards/manage', {
-          method: 'PATCH',
-          headers,
-          body: JSON.stringify({ id: below.id, order: current.order }),
+          body: JSON.stringify({ boards: [{ id: current.id, order: below.order }, { id: below.id, order: current.order }] }),
         }),
       ]);
 
@@ -195,7 +185,7 @@ export default function SettingsPage() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/sub-boards/manage', {
+      const response = await fetch('/admin/sub-boards', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -222,13 +212,13 @@ export default function SettingsPage() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/sub-boards/manage', {
+      const response = await fetch(`/admin/sub-boards/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ id, name: name.trim() }),
+        body: JSON.stringify({ name: name.trim() }),
       });
 
       if (!response.ok) {
@@ -258,15 +248,10 @@ export default function SettingsPage() {
       };
 
       await Promise.all([
-        fetch('/api/sub-boards/manage', {
+        fetch('/admin/sub-boards', {
           method: 'PATCH',
           headers,
-          body: JSON.stringify({ id: current.id, order: above.order }),
-        }),
-        fetch('/api/sub-boards/manage', {
-          method: 'PATCH',
-          headers,
-          body: JSON.stringify({ id: above.id, order: current.order }),
+          body: JSON.stringify({ subBoards: [{ id: current.id, order: above.order }, { id: above.id, order: current.order }] }),
         }),
       ]);
 
@@ -292,15 +277,10 @@ export default function SettingsPage() {
       };
 
       await Promise.all([
-        fetch('/api/sub-boards/manage', {
+        fetch('/admin/sub-boards', {
           method: 'PATCH',
           headers,
-          body: JSON.stringify({ id: current.id, order: below.order }),
-        }),
-        fetch('/api/sub-boards/manage', {
-          method: 'PATCH',
-          headers,
-          body: JSON.stringify({ id: below.id, order: current.order }),
+          body: JSON.stringify({ subBoards: [{ id: current.id, order: below.order }, { id: below.id, order: current.order }] }),
         }),
       ]);
 

@@ -26,7 +26,7 @@ export default function AdminSidebar() {
   const loadSubBoards = async (boardId: number) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/sub-boards?boardId=${boardId}`, {
+      const response = await fetch(`/admin/sub-boards?boardId=${boardId}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await response.json();
@@ -39,7 +39,7 @@ export default function AdminSidebar() {
   const loadBoards = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/boards', {
+      const response = await fetch('/admin/boards', {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       
@@ -93,9 +93,21 @@ export default function AdminSidebar() {
         </div>
         <button
           onClick={() => router.push('/write')}
-          className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition font-medium"
+          className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition font-medium mb-2"
         >
           글쓰기
+        </button>
+        <button
+          onClick={() => router.push('/admin/access-keys')}
+          className="w-full px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition font-medium mb-2"
+        >
+          접근 코드 관리
+        </button>
+        <button
+          onClick={() => router.push('/admin/feedbacks')}
+          className="w-full px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition font-medium"
+        >
+          피드백 관리
         </button>
       </div>
 

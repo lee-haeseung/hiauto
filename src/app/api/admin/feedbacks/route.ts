@@ -13,14 +13,12 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const postId = searchParams.get('postId');
-    const isSolved = searchParams.get('isSolved');
     const search = searchParams.get('search');
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '20');
 
     const result = await getAllFeedbacks({
       postId: postId ? parseInt(postId) : undefined,
-      isSolved: isSolved !== null ? isSolved === 'true' : undefined,
       search: search || undefined,
       page,
       pageSize,

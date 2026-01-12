@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/api/middleware';
-import { successResponse, errorResponse, forbiddenResponse, notFoundResponse, serverErrorResponse } from '@/lib/api/response';
+import { successResponse, errorResponse, forbiddenResponse, serverErrorResponse } from '@/lib/api/response';
 import { updateBoardName } from '@/lib/db/queries';
 
 // PATCH /admin/boards/[boardId] - 게시판 이름 수정

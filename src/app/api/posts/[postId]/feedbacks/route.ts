@@ -32,7 +32,22 @@ export async function POST(
       return errorResponse('이미 피드백을 작성하셨습니다. 수정을 이용해주세요');
     }
 
-    const { phone, description } = await request.json();
+    const { isSolved } = await request.json();
+    let { phone, description } = await request.json();
+
+    // 필수 입력값 확인
+    if (isSolved === undefined || isSolved === null) {
+      return errorResponse('피드백의 해결 여부를 선택해주세요');
+    }
+
+    if (isSolved) {
+      phone = '';
+      description = '';
+    } else {
+      if (!phone || !description) {
+        return errorResponse('연락처와 피드백 내용을 모두 입력해주세요');
+      }
+    }
 
     // accessKey 정보 가져오기 (memo 저장용)
     const accessKey = await getAccessKeyById(auth.keyId);
@@ -44,9 +59,9 @@ export async function POST(
       postId,
       accessKeyId: auth.keyId,
       accessKeyMemo: accessKey.memo || null,
-      phone: phone || '',
-      description: description || '',
-      isSolved: false,
+      phone: phone,
+      description: description,
+      isSolved: isSolved,
     });
 
     return successResponse(feedback, 201);

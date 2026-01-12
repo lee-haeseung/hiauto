@@ -300,7 +300,7 @@ export async function updateAccessKey(keyId: number, data: {
 
 // 모든 액세스 키 조회 (필터링)
 export async function getAllAccessKeys(params?: {
-  postId?: number;
+  postId: number;
   search?: string;
   page?: number;
   pageSize?: number;
@@ -439,8 +439,8 @@ export async function getAllFeedbacks(params?: {
 }
 
 // 피드백 해결 비율 조회 (전체 또는 특정 게시물)
-export async function getFeedbackSummary(postId?: number) {
-  const whereCondition = postId ? eq(feedbacks.postId, postId) : undefined;
+export async function getFeedbackSummary(postId: number) {
+  const whereCondition = eq(feedbacks.postId, postId);
 
   const totalResult = await db
     .select({ count: sql<number>`count(*)` })
@@ -450,7 +450,7 @@ export async function getFeedbackSummary(postId?: number) {
   const solvedResult = await db
     .select({ count: sql<number>`count(*)` })
     .from(feedbacks)
-    .where(whereCondition ? and(whereCondition, eq(feedbacks.isSolved, true)) : eq(feedbacks.isSolved, true));
+    .where(and(whereCondition, eq(feedbacks.isSolved, true)));
 
   const total = Number(totalResult[0]?.count ?? 0);
   const solved = Number(solvedResult[0]?.count ?? 0);
@@ -461,32 +461,56 @@ export async function getFeedbackSummary(postId?: number) {
 
 // 모든 게시물 조회 (관리자용, 필터링)
 export async function getAllPosts(params?: {
+  boardId?: number;
   subBoardId?: number;
-  search?: string;
+  query?: string;
+  target?: 'title' | 'content' | 'all';
   page?: number;
   pageSize?: number;
 }) {
-  const { subBoardId, search, page = 1, pageSize = 20 } = params || {};
+  const { boardId, subBoardId, query, target = 'all', page = 1, pageSize = 20 } = params || {};
   const offset = (page - 1) * pageSize;
 
   const whereConditions: any[] = [];
 
+  // 서브게시판 ID로 필터링
   if (subBoardId) {
     whereConditions.push(eq(posts.subBoardId, subBoardId));
+  } else if (boardId) {
+    // 게시판 ID만 있으면 해당 게시판의 모든 서브게시판 검색
+    const boardSubBoards = await getSubBoardsByBoardId(boardId);
+    const subBoardIds = boardSubBoards.map(sb => sb.id);
+    if (subBoardIds.length > 0) {
+      whereConditions.push(inArray(posts.subBoardId, subBoardIds));
+    }
   }
 
-  if (search) {
-    const searchPattern = `%${search}%`;
-    whereConditions.push(
-      or(
-        ilike(posts.title, searchPattern),
-        ilike(posts.content, searchPattern)
-      )
-    );
+  // 키워드로 검색 (전체|제목|내용)
+  if (query && query.trim()) {
+    const searchPattern = `%${query.trim()}%`;
+    
+    if (target === 'title') {
+      whereConditions.push(ilike(posts.title, searchPattern));
+    } else if (target === 'content') {
+      whereConditions.push(ilike(posts.content, searchPattern));
+    } else {
+      // 전체 검색
+      whereConditions.push(
+        or(
+          ilike(posts.title, searchPattern),
+          ilike(posts.content, searchPattern)
+        )
+      );
+    }
   }
 
   const items = await db
-    .select()
+    .select({
+      id: posts.id,
+      title: posts.title,
+      subBoardId: posts.subBoardId,
+      createdAt: posts.createdAt,
+    })
     .from(posts)
     .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
     .orderBy(posts.createdAt)
@@ -504,8 +528,14 @@ export async function getAllPosts(params?: {
 }
 
 // 모든 서브게시판 조회
-export async function getAllSubBoards() {
-  return await db.select().from(subBoards).orderBy(subBoards.boardId, subBoards.order);
+export async function getAllSubBoards(boardId?: number) {
+  const query = db.select().from(subBoards).orderBy(subBoards.boardId, subBoards.order);
+  
+  if (boardId) {
+    query.where(eq(subBoards.boardId, boardId));
+  }
+
+  return await query;
 }
 
 

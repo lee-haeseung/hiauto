@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/api/middleware';
 import { successResponse, errorResponse, forbiddenResponse, serverErrorResponse } from '@/lib/api/response';
-import { getAllBoards, createBoard, updateBoardName, updateBoardOrder } from '@/lib/db/queries';
+import { getAllBoards, createBoard, updateBoardOrder } from '@/lib/db/queries';
 
 // GET /admin/boards - 게시판 목록 조회
 export async function GET(request: NextRequest) {

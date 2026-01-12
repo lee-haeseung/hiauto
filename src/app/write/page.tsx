@@ -180,7 +180,7 @@ function WritePageContent() {
   const loadSubBoards = async (boardId: number) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/sub-boards?boardId=${boardId}`, {
+      const response = await fetch(`/admin/sub-boards?boardId=${boardId}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await response.json();
@@ -207,7 +207,7 @@ function WritePageContent() {
       const post = await response.json();
       
       // 게시판 정보를 가져오기 위해 subBoardId로 subBoard 조회
-      const subBoardResponse = await fetch(`/api/sub-boards?subBoardId=${post.subBoardId}`, {
+      const subBoardResponse = await fetch(`/admin/sub-boards?subBoardId=${post.subBoardId}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const subBoardData = await subBoardResponse.json();
@@ -341,7 +341,7 @@ function WritePageContent() {
       
       // 수정 모드인지 생성 모드인지 구분
       const isEditMode = !!postId;
-      const url = isEditMode ? `/api/posts/${postId}` : '/api/posts';
+      const url = isEditMode ? `/admin/posts/${postId}` : '/admin/posts';
       const method = isEditMode ? 'PUT' : 'POST';
       
       const response = await fetch(url, {

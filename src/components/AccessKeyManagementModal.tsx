@@ -38,7 +38,7 @@ export default function AccessKeyManagementModal({
       setLoading(true);
       const token = localStorage.getItem('token');
       const response = await fetch(
-        `/api/admin/posts/${postId}/access-keys?page=${currentPage}&pageSize=${pageSize}`,
+        `/admin/access-keys?postId=${postId}&page=${currentPage}&pageSize=${pageSize}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -75,13 +75,14 @@ export default function AccessKeyManagementModal({
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
       
-      const response = await fetch(`/api/admin/posts/${postId}/access-keys`, {
+      const response = await fetch(`/admin/access-keys`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
+          postId,
           memo,
           expiresAt: expiresAt.toISOString(),
         }),
@@ -111,7 +112,7 @@ export default function AccessKeyManagementModal({
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(
-        `/api/admin/posts/${postId}/access-keys/${keyId}`,
+        `/admin/access-keys/${keyId}`,
         {
           method: 'DELETE',
           headers: {

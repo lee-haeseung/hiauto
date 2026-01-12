@@ -50,7 +50,7 @@ export default function SearchPage() {
   const loadBoards = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/boards', {
+      const response = await fetch('/admin/boards', {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       
@@ -70,7 +70,7 @@ export default function SearchPage() {
   const loadSubBoards = async (id: number) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/sub-boards?boardId=${id}`, {
+      const response = await fetch(`/admin/sub-boards?boardId=${id}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await response.json();
@@ -101,7 +101,7 @@ export default function SearchPage() {
       if (subBoardId) params.append('subBoardId', subBoardId);
 
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/search?${params.toString()}`, {
+      const response = await fetch(`/admin/posts?${params.toString()}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       
@@ -110,7 +110,7 @@ export default function SearchPage() {
       }
 
       const data = await response.json();
-      setResults(data);
+      setResults(data.items || []);
     } catch (error) {
       console.error('Search error:', error);
       alert('검색 중 오류가 발생했습니다.');

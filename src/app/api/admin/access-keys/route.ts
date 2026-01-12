@@ -17,8 +17,12 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '20');
 
+    if (!postId) {
+      return errorResponse('게시글 ID를 입력해주세요');
+    }
+
     const result = await getAllAccessKeys({
-      postId: postId ? parseInt(postId) : undefined,
+      postId: parseInt(postId),
       search: search || undefined,
       page,
       pageSize,

@@ -12,14 +12,19 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const subBoardId = searchParams.get('subBoardId');
-    const search = searchParams.get('search');
+    const boardId = searchParams.get('boardId'); // 게시판 ID (optional)
+    const subBoardId = searchParams.get('subBoardId'); // 서브 게시판 ID (optional)
+    const query = searchParams.get('query'); // 검색 키워드
+    const target = searchParams.get('target') || 'all'; // 검색 대상: 전체|제목|내용
+
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '20');
 
     const result = await getAllPosts({
+      boardId: boardId ? parseInt(boardId) : undefined,
       subBoardId: subBoardId ? parseInt(subBoardId) : undefined,
-      search: search || undefined,
+      query: query || undefined,
+      target: target as 'title' | 'content' | 'all',
       page,
       pageSize,
     });

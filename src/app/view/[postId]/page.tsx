@@ -77,7 +77,7 @@ export default function ViewPostPage() {
       
       // 하위 게시판 정보 가져오기
       if (data.subBoardId) {
-        const subBoardResponse = await fetch(`/api/sub-boards?subBoardId=${data.subBoardId}`, {
+        const subBoardResponse = await fetch(`/admin/sub-boards?subBoardId=${data.subBoardId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -89,7 +89,7 @@ export default function ViewPostPage() {
           
           // 게시판 정보 가져오기
           if (subBoardData.boardId) {
-            const boardResponse = await fetch(`/api/boards`, {
+            const boardResponse = await fetch(`/admin/boards`, {
               headers: {
                 'Authorization': `Bearer ${token}`,
               },

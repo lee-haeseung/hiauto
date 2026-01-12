@@ -11,7 +11,10 @@ export async function GET(request: NextRequest) {
       return forbiddenResponse(auth.error);
     }
 
-    const subBoards = await getAllSubBoards();
+    const { searchParams } = new URL(request.url);
+    const boardId = searchParams.get('boardId');
+
+    const subBoards = await getAllSubBoards(boardId ? Number(boardId) : undefined);
     return successResponse(subBoards);
   } catch (error) {
     console.error('Get sub-boards error:', error);
