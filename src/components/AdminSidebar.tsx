@@ -21,49 +21,57 @@ export default function AdminSidebar() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [subBoards, setSubBoards] = useState<{ [key: number]: SubBoard[] }>({});
   const [expandedBoards, setExpandedBoards] = useState<{ [key: number]: boolean }>({});
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const loadSubBoards = async (boardId: number) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/admin/sub-boards?boardId=${boardId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const data = await response.json();
-      setSubBoards((prev) => ({ ...prev, [boardId]: data }));
-    } catch (error) {
-      console.error(`Failed to load sub-boards for board ${boardId}:`, error);
-    }
-  };
-
-  const loadBoards = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/admin/boards', {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      
-      if (response.status === 401 || response.status === 403) {
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-        return;
-      }
-      
-      const data = await response.json();
-      setBoards(data);
-
-      // 각 board의 subBoards 로드
-      for (const board of data) {
-        loadSubBoards(board.id);
-      }
-    } catch (error) {
-      console.error('Failed to load boards:', error);
-    }
-  };
 
   useEffect(() => {
-    loadBoards();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let mounted = true;
+
+    const loadData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+
+        // boards와 subBoards를 병렬로 가져오기
+        const [boardsResponse, subBoardsResponse] = await Promise.all([
+          fetch('/api/admin/boards', { headers }),
+          fetch('/api/admin/sub-boards', { headers })
+        ]);
+
+        if (boardsResponse.status === 401 || boardsResponse.status === 403) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('role');
+          window.location.href = '/admin/login';
+          return;
+        }
+
+        const boardsData = await boardsResponse.json();
+        const subBoardsData = await subBoardsResponse.json();
+
+        if (!mounted) return;
+
+        // boards 데이터 설정
+        setBoards(boardsData.success ? boardsData.data : []);
+
+        // subBoards를 boardId별로 그룹화
+        if (subBoardsData.success) {
+          const groupedSubBoards: { [key: number]: SubBoard[] } = {};
+          subBoardsData.data.forEach((subBoard: SubBoard) => {
+            if (!groupedSubBoards[subBoard.boardId]) {
+              groupedSubBoards[subBoard.boardId] = [];
+            }
+            groupedSubBoards[subBoard.boardId].push(subBoard);
+          });
+          setSubBoards(groupedSubBoards);
+        }
+      } catch (error) {
+        console.error('Failed to load boards and sub-boards:', error);
+      }
+    };
+
+    loadData();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const toggleBoard = (boardId: number) => {
@@ -96,12 +104,6 @@ export default function AdminSidebar() {
           className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition font-medium mb-2"
         >
           글쓰기
-        </button>
-        <button
-          onClick={() => router.push('/admin/access-keys')}
-          className="w-full px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition font-medium mb-2"
-        >
-          접근 코드 관리
         </button>
         <button
           onClick={() => router.push('/admin/feedbacks')}

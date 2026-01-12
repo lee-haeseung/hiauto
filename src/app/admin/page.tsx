@@ -1,6 +1,6 @@
 import AdminLayout from '@/components/AdminLayout';
 
-export default function Home() {
+export default function AdminHome() {
   return (
     <AdminLayout>
       <div className="flex items-center justify-center h-full">

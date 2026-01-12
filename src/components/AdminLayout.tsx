@@ -15,11 +15,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       const token = localStorage.getItem('token');
       const role = localStorage.getItem('role');
 
+      console.log('AdminLayout 인증 체크:', { token, role });
+
       if (!token || role !== 'admin') {
-        router.push('/login');
+        console.log('인증 실패, /admin/login으로 리다이렉트');
+        router.push('/admin/login');
         return;
       }
 
+      console.log('인증 성공');
       setIsAuthenticated(true);
       setIsLoading(false);
     };
