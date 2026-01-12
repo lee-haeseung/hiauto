@@ -2,6 +2,7 @@
 
 import AdminLayout from '@/components/AdminLayout';
 import { useEffect, useState } from 'react';
+import { apiGet, apiPost, apiPatch } from '@/lib/api/client';
 
 interface Board {
   id: number;
@@ -23,11 +24,8 @@ export default function SettingsPage() {
 
   const loadSubBoards = async (boardId: number) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/admin/sub-boards?boardId=${boardId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const data = await response.json();
+      const token = localStorage.getItem('token') || undefined;
+      const data = await apiGet<SubBoard[]>(`/api/admin/sub-boards?boardId=${boardId}`, token);
       setSubBoards((prev) => ({ ...prev, [boardId]: data || [] }));
     } catch (error) {
       console.error(`Failed to load sub-boards for board ${boardId}:`, error);
@@ -37,25 +35,19 @@ export default function SettingsPage() {
   useEffect(() => {
     const loadBoards = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('/admin/boards', {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        
-        if (response.status === 401 || response.status === 403) {
-          localStorage.removeItem('token');
-          window.location.href = '/login';
-          return;
-        }
-        
-        const data = await response.json();
+        const token = localStorage.getItem('token') || undefined;
+        const data = await apiGet<Board[]>('/api/admin/boards', token);
         setBoards(data || []);
 
         for (const board of data) {
           loadSubBoards(board.id);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to load boards:', error);
+        if (error.message?.includes('401') || error.message?.includes('403')) {
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+        }
       }
     };
 
@@ -74,21 +66,8 @@ export default function SettingsPage() {
     if (!name || !name.trim()) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/admin/boards', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ name: name.trim() }),
-      });
-
-      if (!response.ok) {
-        alert('게시판 추가에 실패했습니다.');
-        return;
-      }
-
+      const token = localStorage.getItem('token') || undefined;
+      await apiPost('/api/admin/boards', { name: name.trim() }, token);
       window.location.reload();
     } catch (error) {
       console.error('Failed to add board:', error);
@@ -101,21 +80,8 @@ export default function SettingsPage() {
     if (!name || !name.trim() || name.trim() === currentName) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/admin/boards/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ name: name.trim() }),
-      });
-
-      if (!response.ok) {
-        alert('게시판 이름 변경에 실패했습니다.');
-        return;
-      }
-
+      const token = localStorage.getItem('token') || undefined;
+      await apiPatch(`/api/admin/boards/${id}`, { name: name.trim() }, token);
       window.location.reload();
     } catch (error) {
       console.error('Failed to update board name:', error);
@@ -130,20 +96,12 @@ export default function SettingsPage() {
     const above = boards[index - 1];
 
     try {
-      const token = localStorage.getItem('token');
-      const headers = {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
-
-      await Promise.all([
-        fetch('/admin/boards', {
-          method: 'PATCH',
-          headers,
-          body: JSON.stringify({ boards: [{ id: current.id, order: above.order }, { id: above.id, order: current.order }] }),
-        }),
-      ]);
-
+      const token = localStorage.getItem('token') || undefined;
+      await apiPatch(
+        '/api/admin/boards',
+        { boards: [{ id: current.id, order: above.order }, { id: above.id, order: current.order }] },
+        token
+      );
       window.location.reload();
     } catch (error) {
       console.error('Failed to move board:', error);
@@ -158,20 +116,12 @@ export default function SettingsPage() {
     const below = boards[index + 1];
 
     try {
-      const token = localStorage.getItem('token');
-      const headers = {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
-
-      await Promise.all([
-        fetch('/admin/boards', {
-          method: 'PATCH',
-          headers,
-          body: JSON.stringify({ boards: [{ id: current.id, order: below.order }, { id: below.id, order: current.order }] }),
-        }),
-      ]);
-
+      const token = localStorage.getItem('token') || undefined;
+      await apiPatch(
+        '/api/admin/boards',
+        { boards: [{ id: current.id, order: below.order }, { id: below.id, order: current.order }] },
+        token
+      );
       window.location.reload();
     } catch (error) {
       console.error('Failed to move board:', error);
@@ -184,21 +134,8 @@ export default function SettingsPage() {
     if (!name || !name.trim()) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/admin/sub-boards', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ boardId, name: name.trim() }),
-      });
-
-      if (!response.ok) {
-        alert('서브게시판 추가에 실패했습니다.');
-        return;
-      }
-
+      const token = localStorage.getItem('token') || undefined;
+      await apiPost('/api/admin/sub-boards', { boardId, name: name.trim() }, token);
       await loadSubBoards(boardId);
     } catch (error) {
       console.error('Failed to add sub-board:', error);
@@ -211,21 +148,8 @@ export default function SettingsPage() {
     if (!name || !name.trim() || name.trim() === currentName) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/admin/sub-boards/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ name: name.trim() }),
-      });
-
-      if (!response.ok) {
-        alert('서브게시판 이름 변경에 실패했습니다.');
-        return;
-      }
-
+      const token = localStorage.getItem('token') || undefined;
+      await apiPatch(`/api/admin/sub-boards/${id}`, { name: name.trim() }, token);
       await loadSubBoards(boardId);
     } catch (error) {
       console.error('Failed to update sub-board name:', error);
@@ -241,20 +165,12 @@ export default function SettingsPage() {
     const above = subs[index - 1];
 
     try {
-      const token = localStorage.getItem('token');
-      const headers = {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
-
-      await Promise.all([
-        fetch('/admin/sub-boards', {
-          method: 'PATCH',
-          headers,
-          body: JSON.stringify({ subBoards: [{ id: current.id, order: above.order }, { id: above.id, order: current.order }] }),
-        }),
-      ]);
-
+      const token = localStorage.getItem('token') || undefined;
+      await apiPatch(
+        '/api/admin/sub-boards',
+        { subBoards: [{ id: current.id, order: above.order }, { id: above.id, order: current.order }] },
+        token
+      );
       await loadSubBoards(boardId);
     } catch (error) {
       console.error('Failed to move sub-board:', error);
@@ -270,20 +186,12 @@ export default function SettingsPage() {
     const below = subs[index + 1];
 
     try {
-      const token = localStorage.getItem('token');
-      const headers = {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
-
-      await Promise.all([
-        fetch('/admin/sub-boards', {
-          method: 'PATCH',
-          headers,
-          body: JSON.stringify({ subBoards: [{ id: current.id, order: below.order }, { id: below.id, order: current.order }] }),
-        }),
-      ]);
-
+      const token = localStorage.getItem('token') || undefined;
+      await apiPatch(
+        '/api/admin/sub-boards',
+        { subBoards: [{ id: current.id, order: below.order }, { id: below.id, order: current.order }] },
+        token
+      );
       await loadSubBoards(boardId);
     } catch (error) {
       console.error('Failed to move sub-board:', error);
@@ -310,17 +218,20 @@ export default function SettingsPage() {
             boards.map((board, boardIndex) => (
               <div key={board.id} className="border mb-3">
                 <div className="flex items-center justify-between p-2 border-b">
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => toggleBoard(board.id)}>
+                  <div 
+                    className="flex items-center gap-2 flex-1 cursor-pointer"
+                    onClick={() => toggleBoard(board.id)}
+                  >
+                    <button>
                       {expandedBoards[board.id] ? '▼' : '▶'}
                     </button>
                     <span className="font-semibold">{board.name}</span>
                   </div>
                   <div className="flex gap-1">
-                    <button onClick={() => handleUpdateBoardName(board.id, board.name)} className="px-2 py-1 text-sm bg-blue-100">수정</button>
-                    <button onClick={() => handleMoveBoardUp(boardIndex)} disabled={boardIndex === 0} className="px-2 py-1 text-sm bg-gray-100 disabled:opacity-50">↑</button>
-                    <button onClick={() => handleMoveBoardDown(boardIndex)} disabled={boardIndex === boards.length - 1} className="px-2 py-1 text-sm bg-gray-100 disabled:opacity-50">↓</button>
-                    <button onClick={() => handleAddSubBoard(board.id)} className="px-2 py-1 text-sm bg-green-600 text-white">+ 서브</button>
+                    <button onClick={(e) => { e.stopPropagation(); handleUpdateBoardName(board.id, board.name); }} className="px-2 py-1 text-sm bg-blue-100">수정</button>
+                    <button onClick={(e) => { e.stopPropagation(); handleMoveBoardUp(boardIndex); }} disabled={boardIndex === 0} className="px-2 py-1 text-sm bg-gray-100 disabled:opacity-50">↑</button>
+                    <button onClick={(e) => { e.stopPropagation(); handleMoveBoardDown(boardIndex); }} disabled={boardIndex === boards.length - 1} className="px-2 py-1 text-sm bg-gray-100 disabled:opacity-50">↓</button>
+                    <button onClick={(e) => { e.stopPropagation(); handleAddSubBoard(board.id); }} className="px-2 py-1 text-sm bg-green-600 text-white">+ 서브</button>
                   </div>
                 </div>
 

@@ -6,7 +6,7 @@ import { updateBoardName } from '@/lib/db/queries';
 // PATCH /admin/boards/[boardId] - 게시판 이름 수정
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { boardId: string } }
+  { params }: { params: Promise<{ boardId: string }> }
 ) {
   try {
     const auth = await requireAdmin(request);
@@ -14,7 +14,8 @@ export async function PATCH(
       return forbiddenResponse(auth.error);
     }
 
-    const boardId = parseInt(params.boardId);
+    const { boardId: boardIdParam } = await params;
+    const boardId = parseInt(boardIdParam);
     if (isNaN(boardId)) {
       return errorResponse('잘못된 게시판 ID입니다');
     }

@@ -6,7 +6,7 @@ import { updateSubBoardName } from '@/lib/db/queries';
 // PATCH /admin/sub-boards/[subBoardId] - 하위 게시판 이름 수정
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { subBoardId: string } }
+  { params }: { params: Promise<{ subBoardId: string }> }
 ) {
   try {
     const auth = await requireAdmin(request);
@@ -14,7 +14,8 @@ export async function PATCH(
       return forbiddenResponse(auth.error);
     }
 
-    const subBoardId = parseInt(params.subBoardId);
+    const { subBoardId: subBoardIdParam } = await params;
+    const subBoardId = parseInt(subBoardIdParam);
     if (isNaN(subBoardId)) {
       return errorResponse('잘못된 하위 게시판 ID입니다');
     }

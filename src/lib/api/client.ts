@@ -60,11 +60,8 @@ export async function apiFetch<T>(
   }
 
   // successResponse 구조에서 data 추출
-  if (result.data === undefined) {
-    throw new Error('응답 데이터가 없습니다.');
-  }
-
-  return result.data;
+  // data가 없는 경우도 허용 (예: 빈 객체, null, undefined)
+  return result.data as T;
 }
 
 // GET 요청
@@ -93,6 +90,19 @@ export async function apiPut<T>(
 ): Promise<T> {
   return apiFetch<T>(url, {
     method: 'PUT',
+    body: body ? JSON.stringify(body) : undefined,
+    token,
+  });
+}
+
+// PATCH 요청
+export async function apiPatch<T>(
+  url: string,
+  body?: unknown,
+  token?: string
+): Promise<T> {
+  return apiFetch<T>(url, {
+    method: 'PATCH',
     body: body ? JSON.stringify(body) : undefined,
     token,
   });
