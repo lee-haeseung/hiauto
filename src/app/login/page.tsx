@@ -16,7 +16,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const data = await apiPost<{ token: string; role: string; postId: number }>(
+      const data = await apiPost<{ token: string; role: string; postId: number; keyId: number }>(
         '/api/auth/access-key',
         { key: accessKey }
       );
@@ -25,6 +25,7 @@ export default function LoginPage() {
       localStorage.setItem('token', data.token);
       localStorage.setItem('role', data.role);
       localStorage.setItem('postId', data.postId.toString());
+      localStorage.setItem('keyId', data.keyId.toString());
 
       // 액세스 키로 접근한 게시글로 이동
       router.push(`/view/${data.postId}`);

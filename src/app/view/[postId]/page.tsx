@@ -1,6 +1,7 @@
 'use client';
 
 import AccessKeyLayout from '@/components/AccessKeyLayout';
+import FeedbackSection from '@/components/FeedbackSection';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { apiGet } from '@/lib/api/client';
@@ -172,6 +173,9 @@ export default function ViewPostPage() {
                 </button>
               </div>
             )}
+
+            {/* 피드백 섹션 */}
+            <FeedbackSection postId={post.id} />
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500">

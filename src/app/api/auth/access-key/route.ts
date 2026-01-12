@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
     return successResponse({ 
       token, 
       role: 'access-key', 
-      postId: accessKey.postId 
+      postId: accessKey.postId,
+      keyId: accessKey.id
     });
   } catch (error) {
     console.error('Access key verification error:', error);

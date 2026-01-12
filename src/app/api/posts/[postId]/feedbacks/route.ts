@@ -1,7 +1,40 @@
 import { NextRequest } from 'next/server';
-import { requireUser } from '@/lib/api/middleware';
+import { requireUser, requireAuth } from '@/lib/api/middleware';
 import { successResponse, errorResponse, forbiddenResponse, serverErrorResponse } from '@/lib/api/response';
-import { createFeedback, getFeedbackByAccessKeyId, getAccessKeyById } from '@/lib/db/queries';
+import { createFeedback, getFeedbackByAccessKeyId, getAccessKeyById, getFeedbacksByPostId } from '@/lib/db/queries';
+
+// GET /posts/[postId]/feedbacks - 피드백 목록 조회
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ postId: string }> }
+) {
+  try {
+    const auth = await requireAuth(request);
+    if (!auth.success) {
+      return forbiddenResponse(auth.error);
+    }
+
+    const { postId: postIdParam } = await params;
+    const postId = parseInt(postIdParam);
+    
+    if (isNaN(postId)) {
+      return errorResponse('잘못된 게시글 ID입니다');
+    }
+
+    // accessKey 사용자는 본인의 피드백만 조회 가능
+    if (auth.role === 'access-key') {
+      const feedback = await getFeedbackByAccessKeyId(auth.keyId);
+      return successResponse(feedback ? [feedback] : []);
+    }
+
+    // 관리자는 해당 게시물의 모든 피드백 조회 가능
+    const feedbacks = await getFeedbacksByPostId(postId);
+    return successResponse(feedbacks);
+  } catch (error) {
+    console.error('Get feedbacks error:', error);
+    return serverErrorResponse('피드백 조회에 실패했습니다');
+  }
+}
 
 // POST /posts/[postId]/feedbacks - 피드백 생성
 export async function POST(
@@ -32,17 +65,22 @@ export async function POST(
       return errorResponse('이미 피드백을 작성하셨습니다. 수정을 이용해주세요');
     }
 
-    const { isSolved } = await request.json();
-    let { phone, description } = await request.json();
+    const body = await request.json();
+    const { isSolved, phone, description } = body;
 
     // 필수 입력값 확인
     if (isSolved === undefined || isSolved === null) {
       return errorResponse('피드백의 해결 여부를 선택해주세요');
     }
 
+    const feedbackData = {
+      phone: phone || '',
+      description: description || ''
+    };
+
     if (isSolved) {
-      phone = '';
-      description = '';
+      feedbackData.phone = '';
+      feedbackData.description = '';
     } else {
       if (!phone || !description) {
         return errorResponse('연락처와 피드백 내용을 모두 입력해주세요');
@@ -59,8 +97,8 @@ export async function POST(
       postId,
       accessKeyId: auth.keyId,
       accessKeyMemo: accessKey.memo || null,
-      phone: phone,
-      description: description,
+      phone: feedbackData.phone,
+      description: feedbackData.description,
       isSolved: isSolved,
     });
 
