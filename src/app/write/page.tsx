@@ -4,6 +4,7 @@ import AdminLayout from '@/components/AdminLayout';
 import { File } from '@/lib/editor/File';
 import { FontSize } from '@/lib/editor/FontSize';
 import { Video } from '@/lib/editor/Video';
+import { apiGet, apiPost, apiPut } from '@/lib/api/client';
 import Color from '@tiptap/extension-color';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
@@ -89,7 +90,7 @@ function WritePageContent() {
       FontSize,
       Color,
     ],
-    content: '<p style="font-size: 16px">내용을 입력해주세요.</p>',
+    content: '',
     immediatelyRender: false,
     editorProps: {
       attributes: {
@@ -159,31 +160,22 @@ function WritePageContent() {
 
   const loadBoards = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/boards', {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      
-      if (response.status === 401 || response.status === 403) {
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-        return;
-      }
-      
-      const data = await response.json();
+      const token = localStorage.getItem('token') || undefined;
+      const data = await apiGet<Board[]>('/api/admin/boards', token);
       setBoards(data || []);
     } catch (error) {
       console.error('Failed to load boards:', error);
+      if (error instanceof Error && error.message.includes('401')) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
     }
   };
 
   const loadSubBoards = async (boardId: number) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/admin/sub-boards?boardId=${boardId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const data = await response.json();
+      const token = localStorage.getItem('token') || undefined;
+      const data = await apiGet<SubBoard[]>(`/api/admin/sub-boards?boardId=${boardId}`, token);
       setSubBoards(data || []);
     } catch (error) {
       console.error('Failed to load sub-boards:', error);
@@ -193,31 +185,22 @@ function WritePageContent() {
   const loadPostData = async (postId: string) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/posts/${postId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('게시글을 불러오는데 실패했습니다.');
-      }
-
-      const post = await response.json();
+      const token = localStorage.getItem('token') || undefined;
+      const post = await apiGet<any>(`/api/posts/${postId}`, token);
       
-      // 게시판 정보를 가져오기 위해 subBoardId로 subBoard 조회
-      const subBoardResponse = await fetch(`/admin/sub-boards?subBoardId=${post.subBoardId}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const subBoardData = await subBoardResponse.json();
+      // 하위 게시판 정보 조회
+      const subBoard = await apiGet<any>(`/api/admin/sub-boards/${post.subBoardId}`, token);
       
-      // 게시판 선택
-      if (subBoardData && subBoardData.boardId) {
-        setSelectedBoardId(String(subBoardData.boardId));
+      if (subBoard && subBoard.boardId) {
+        // 게시판 정보 조회
+        const board = await apiGet<any>(`/api/admin/boards/${subBoard.boardId}`, token);
+        
+        // 게시판 선택
+        setSelectedBoardId(String(board.id));
         // 하위 게시판 목록 로드
-        await loadSubBoards(subBoardData.boardId);
-        setSelectedSubBoardId(String(post.subBoardId));
+        await loadSubBoards(board.id);
+        // 하위 게시판 선택
+        setSelectedSubBoardId(String(subBoard.id));
       }
       
       // 제목 설정
@@ -242,16 +225,20 @@ function WritePageContent() {
       const formData = new FormData();
       formData.append('file', file);
 
+      const token = localStorage.getItem('token');
       const response = await fetch('/api/upload', {
         method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `Upload failed: ${response.status}`);
       }
 
-      const data = await response.json();
+      const result = await response.json();
+      const data = result.success ? result.data : result;
       const fileType = file.type;
 
       // 파일 타입에 따라 적절한 방식으로 삽입
@@ -329,36 +316,27 @@ function WritePageContent() {
 
     setSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || undefined;
       
       // 수정 모드인지 생성 모드인지 구분
       const isEditMode = !!postId;
-      const url = isEditMode ? `/admin/posts/${postId}` : '/admin/posts';
-      const method = isEditMode ? 'PUT' : 'POST';
       
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          subBoardId: parseInt(selectedSubBoardId),
-          title,
-          content,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(isEditMode ? 'Failed to update post' : 'Failed to create post');
-      }
-
-      const post = await response.json();
+      const postData = {
+        subBoardId: parseInt(selectedSubBoardId),
+        title,
+        content,
+      };
+      
+      const post = isEditMode
+        ? await apiPut<any>(`/api/admin/posts/${postId}`, postData, token)
+        : await apiPost<any>('/api/admin/posts', postData, token);
+      
       alert(isEditMode ? '게시글이 수정되었습니다!' : '게시글이 작성되었습니다!');
       router.push(`/post/${post.id}`);
     } catch (error) {
       console.error('Submit error:', error);
-      alert(postId ? '게시글 수정에 실패했습니다.' : '게시글 작성에 실패했습니다.');
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
+      alert(`${postId ? '게시글 수정' : '게시글 작성'}에 실패했습니다.\n${errorMessage}`);
     } finally {
       setSubmitting(false);
     }

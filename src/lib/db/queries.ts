@@ -8,6 +8,12 @@ export async function getAllBoards() {
   return await db.select().from(boards).orderBy(boards.order);
 }
 
+// Board 조회 (ID로)
+export async function getBoardById(boardId: number) {
+  const result = await db.select().from(boards).where(eq(boards.id, boardId));
+  return result[0] || null;
+}
+
 // Board 추가
 export async function createBoard(name: string) {
   const maxOrder = await db.select({ max: sql<number>`MAX(${boards.order})` }).from(boards);

@@ -6,7 +6,7 @@ import { getAccessKeyById, updateAccessKey, deleteAccessKey } from '@/lib/db/que
 // PATCH /admin/access-keys/[keyId] - 접근 코드 수정 (메모/만료일)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { keyId: string } }
+  { params }: { params: Promise<{ keyId: string }> }
 ) {
   try {
     const auth = await requireAdmin(request);
@@ -14,7 +14,8 @@ export async function PATCH(
       return forbiddenResponse(auth.error);
     }
 
-    const keyId = parseInt(params.keyId);
+    const { keyId: keyIdParam } = await params;
+    const keyId = parseInt(keyIdParam);
     if (isNaN(keyId)) {
       return errorResponse('잘못된 접근 코드 ID입니다');
     }
@@ -46,7 +47,7 @@ export async function PATCH(
 // DELETE /admin/access-keys/[keyId] - 접근 코드 삭제
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { keyId: string } }
+  { params }: { params: Promise<{ keyId: string }> }
 ) {
   try {
     const auth = await requireAdmin(request);
@@ -54,7 +55,8 @@ export async function DELETE(
       return forbiddenResponse(auth.error);
     }
 
-    const keyId = parseInt(params.keyId);
+    const { keyId: keyIdParam } = await params;
+    const keyId = parseInt(keyIdParam);
     if (isNaN(keyId)) {
       return errorResponse('잘못된 접근 코드 ID입니다');
     }

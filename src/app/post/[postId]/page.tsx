@@ -341,7 +341,7 @@ export default function PostDetailPage() {
                   onChange={(e) => setFeedbackSearch(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleFeedbackSearch()}
                   className="flex-1 px-3 py-2 border rounded"
-                  placeholder="전화번호, 설명, 메모로 검색"
+                  placeholder="연락처, 설명, 메모로 검색"
                 />
                 <button onClick={handleFeedbackSearch} className="px-4 py-2 bg-blue-600 text-white rounded">
                   검색

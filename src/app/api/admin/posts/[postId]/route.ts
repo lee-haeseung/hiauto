@@ -6,7 +6,7 @@ import { getPostById, updatePost } from '@/lib/db/queries';
 // PUT /admin/posts/[postId] - 게시글 수정
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
     const auth = await requireAdmin(request);
@@ -14,7 +14,8 @@ export async function PUT(
       return forbiddenResponse(auth.error);
     }
 
-    const postId = parseInt(params.postId);
+    const { postId: postIdParam } = await params;
+    const postId = parseInt(postIdParam);
     if (isNaN(postId)) {
       return errorResponse('잘못된 게시글 ID입니다');
     }

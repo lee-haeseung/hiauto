@@ -1,7 +1,36 @@
 import { NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/api/middleware';
-import { successResponse, errorResponse, forbiddenResponse, serverErrorResponse } from '@/lib/api/response';
-import { updateSubBoardName } from '@/lib/db/queries';
+import { successResponse, errorResponse, forbiddenResponse, notFoundResponse, serverErrorResponse } from '@/lib/api/response';
+import { getSubBoardById, updateSubBoardName } from '@/lib/db/queries';
+
+// GET /admin/sub-boards/[subBoardId] - 하위 게시판 단건 조회
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ subBoardId: string }> }
+) {
+  try {
+    const auth = await requireAdmin(request);
+    if (!auth.success) {
+      return forbiddenResponse(auth.error);
+    }
+
+    const { subBoardId: subBoardIdParam } = await params;
+    const subBoardId = parseInt(subBoardIdParam);
+    if (isNaN(subBoardId)) {
+      return notFoundResponse('잘못된 하위 게시판 ID입니다');
+    }
+
+    const subBoard = await getSubBoardById(subBoardId);
+    if (!subBoard) {
+      return notFoundResponse('하위 게시판을 찾을 수 없습니다');
+    }
+
+    return successResponse(subBoard);
+  } catch (error) {
+    console.error('Get sub-board error:', error);
+    return serverErrorResponse('하위 게시판 조회에 실패했습니다');
+  }
+}
 
 // PATCH /admin/sub-boards/[subBoardId] - 하위 게시판 이름 수정
 export async function PATCH(

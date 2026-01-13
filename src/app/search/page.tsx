@@ -3,6 +3,7 @@
 import AdminLayout from '@/components/AdminLayout';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { apiGet } from '@/lib/api/client';
 
 interface Board {
   id: number;
@@ -49,31 +50,22 @@ export default function SearchPage() {
 
   const loadBoards = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/admin/boards', {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      
-      if (response.status === 401 || response.status === 403) {
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-        return;
-      }
-      
-      const data = await response.json();
+      const token = localStorage.getItem('token') || undefined;
+      const data = await apiGet<Board[]>('/api/admin/boards', token);
       setBoards(data || []);
     } catch (error) {
       console.error('Failed to load boards:', error);
+      if (error instanceof Error && error.message.includes('401')) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
     }
   };
 
   const loadSubBoards = async (id: number) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/admin/sub-boards?boardId=${id}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const data = await response.json();
+      const token = localStorage.getItem('token') || undefined;
+      const data = await apiGet<SubBoard[]>(`/api/admin/sub-boards?boardId=${id}`, token);
       setSubBoards(data || []);
     } catch (error) {
       console.error('Failed to load sub-boards:', error);
@@ -100,16 +92,8 @@ export default function SearchPage() {
       if (boardId) params.append('boardId', boardId);
       if (subBoardId) params.append('subBoardId', subBoardId);
 
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/admin/posts?${params.toString()}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      
-      if (!response.ok) {
-        throw new Error('검색에 실패했습니다.');
-      }
-
-      const data = await response.json();
+      const token = localStorage.getItem('token') || undefined;
+      const data = await apiGet<{ items: SearchResult[] }>(`/api/admin/posts?${params.toString()}`, token);
       setResults(data.items || []);
     } catch (error) {
       console.error('Search error:', error);
