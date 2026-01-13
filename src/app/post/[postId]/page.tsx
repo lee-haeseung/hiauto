@@ -253,7 +253,7 @@ export default function PostDetailPage() {
             {error}
           </div>
         ) : post ? (
-          <div className="max-w-4xl mx-auto">
+          <div>
             {/* 제목 */}
             <div className="bg-white border border-gray-200 rounded-lg p-6 mb-4">
               {board && subBoard && (

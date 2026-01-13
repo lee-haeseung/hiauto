@@ -107,30 +107,40 @@ export default function ViewPostPage() {
             {error}
           </div>
         ) : post ? (
-          <div className="max-w-4xl mx-auto">
-            {/* 제목 */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6 mb-4">
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">
-                {post.title}
-              </h1>
-              <div className="flex gap-4 text-sm text-gray-500">
-                <span>작성일: {formatDate(post.createdAt)}</span>
-                {post.updatedAt !== post.createdAt && (
-                  <span>수정일: {formatDate(post.updatedAt)}</span>
-                )}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            {/* 왼쪽 콘텐츠 영역 (4) */}
+            <div className="lg:col-span-4">
+              {/* 제목 */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6 mb-4">
+                <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                  {post.title}
+                </h1>
+                <div className="flex gap-4 text-sm text-gray-500">
+                  <span>작성일: {formatDate(post.createdAt)}</span>
+                  {post.updatedAt !== post.createdAt && (
+                    <span>수정일: {formatDate(post.updatedAt)}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* 내용 */}
+              <div className="border border-gray-300 rounded-lg bg-white shadow-sm overflow-hidden">
+                <div
+                  className="prose prose-sm sm:prose lg:prose-lg max-w-none focus:outline-none min-h-125 p-6 post-content no-select"
+                  dangerouslySetInnerHTML={{ __html: post.content }}
+                />
+              </div>
+
+              {/* 피드백 섹션 */}
+              <FeedbackSection postId={post.id} />
+            </div>
+
+            {/* 오른쪽 광고 영역 (1) - 1024px 이상에서만 표시 */}
+            <div className="hidden lg:block lg:col-span-1">
+              <div className="sticky top-8">
+                {/* 광고 공간 - 필요시 여기에 광고 컴포넌트 삽입 */}
               </div>
             </div>
-
-            {/* 내용 */}
-            <div className="border border-gray-300 rounded-lg bg-white shadow-sm overflow-hidden">
-              <div
-                className="prose prose-sm sm:prose lg:prose-lg max-w-none focus:outline-none min-h-125 p-6 post-content no-select"
-                dangerouslySetInnerHTML={{ __html: post.content }}
-              />
-            </div>
-
-            {/* 피드백 섹션 */}
-            <FeedbackSection postId={post.id} />
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500">

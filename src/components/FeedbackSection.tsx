@@ -263,7 +263,7 @@ export default function FeedbackSection({ postId }: FeedbackSectionProps) {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto mt-8">
+      <div className="mt-8">
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="text-gray-500">피드백 정보를 불러오는 중...</div>
         </div>
@@ -272,7 +272,7 @@ export default function FeedbackSection({ postId }: FeedbackSectionProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto mt-8">
+    <div className="mt-8">
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <h2 className="text-2xl font-bold mb-4">피드백</h2>
 

@@ -344,7 +344,7 @@ function WritePageContent() {
 
   return (
     <AdminLayout>
-      <div className="p-8 max-w-5xl mx-auto">
+      <div className="p-8">
         <h1 className="text-3xl font-bold mb-8">{postId ? '글 수정' : '글쓰기'}</h1>
 
         {loading && (
@@ -716,7 +716,7 @@ export default function WritePage() {
   return (
     <Suspense fallback={
       <AdminLayout>
-        <div className="p-8 max-w-5xl mx-auto">
+        <div className="p-8">
           <div className="flex items-center justify-center py-12">
             <div className="text-gray-500">로딩 중...</div>
           </div>
