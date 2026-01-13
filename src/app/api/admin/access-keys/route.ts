@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const postId = searchParams.get('postId');
     const search = searchParams.get('search');
+    const isExpiredParam = searchParams.get('isExpired');
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '20');
 
@@ -21,9 +22,18 @@ export async function GET(request: NextRequest) {
       return errorResponse('게시글 ID를 입력해주세요');
     }
 
+    // isExpired 파라미터 처리 (true/false/undefined)
+    let isExpired: boolean | undefined = undefined;
+    if (isExpiredParam === 'true') {
+      isExpired = true;
+    } else if (isExpiredParam === 'false') {
+      isExpired = false;
+    }
+
     const result = await getAllAccessKeys({
       postId: parseInt(postId),
       search: search || undefined,
+      isExpired,
       page,
       pageSize,
     });
@@ -49,10 +59,14 @@ export async function POST(request: NextRequest) {
       return errorResponse('게시글 ID를 입력해주세요');
     }
 
+    if (!expiresAt) {
+      return errorResponse('만료일은 필수입니다');
+    }
+
     const accessKey = await createAccessKey({
       postId,
       memo: memo || '',
-      expiresAt: expiresAt ? new Date(expiresAt) : null,
+      expiresAt: new Date(expiresAt),
     });
 
     return successResponse(accessKey, 201);

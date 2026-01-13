@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { and, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, inArray, isNull, lt, gte, or, sql } from 'drizzle-orm';
 import { db } from './index';
 import { accessKeys, admins, boards, feedbacks, posts, subBoards } from './schema';
 
@@ -148,7 +148,7 @@ export async function verifyAccessKey(key: string) {
 }
 
 // 액세스 키 검증 (ID로 조회)
-export async function getAccessKeyById(keyId: number) {
+export async function getAccessKeyById(keyId: number, skipExpiryCheck: boolean = false) {
   const result = await db
     .select()
     .from(accessKeys)
@@ -158,8 +158,8 @@ export async function getAccessKeyById(keyId: number) {
   
   const accessKey = result[0];
   
-  // 만료 확인
-  if (accessKey.expiresAt && accessKey.expiresAt < new Date()) {
+  // 만료 확인 (skipExpiryCheck가 true면 만료 체크 안 함)
+  if (!skipExpiryCheck && accessKey.expiresAt && accessKey.expiresAt < new Date()) {
     return null;
   }
   
@@ -308,10 +308,11 @@ export async function updateAccessKey(keyId: number, data: {
 export async function getAllAccessKeys(params?: {
   postId: number;
   search?: string;
+  isExpired?: boolean;
   page?: number;
   pageSize?: number;
 }) {
-  const { postId, search, page = 1, pageSize = 20 } = params || {};
+  const { postId, search, isExpired, page = 1, pageSize = 20 } = params || {};
   const offset = (page - 1) * pageSize;
 
   const whereConditions: any[] = [];
@@ -328,6 +329,23 @@ export async function getAllAccessKeys(params?: {
         ilike(accessKeys.memo, searchPattern)
       )
     );
+  }
+
+  // 만료 여부 필터링
+  if (isExpired !== undefined) {
+    const now = new Date();
+    if (isExpired) {
+      // 만료된 키만 (expiresAt이 현재 시간보다 이전)
+      whereConditions.push(lt(accessKeys.expiresAt, now));
+    } else {
+      // 만료되지 않은 키만 (expiresAt이 현재 시간 이후 또는 null)
+      whereConditions.push(
+        or(
+          gte(accessKeys.expiresAt, now),
+          isNull(accessKeys.expiresAt)
+        )
+      );
+    }
   }
 
   const keys = await db
