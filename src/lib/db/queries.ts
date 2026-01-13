@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import { randomUUID } from 'crypto';
 import { and, desc, eq, ilike, inArray, isNull, lt, gte, or, sql } from 'drizzle-orm';
 import { db } from './index';
 import { accessKeys, admins, boards, feedbacks, posts, subBoards } from './schema';
@@ -275,8 +275,8 @@ export async function createAccessKey(data: {
   memo?: string;
   expiresAt?: Date | null;
 }) {
-  // 랜덤 키 생성 (32자 hex)
-  const key = crypto.randomBytes(16).toString('hex');
+  // UUID 기반 키 생성 (중복 방지)
+  const key = randomUUID();
   
   const values: any = {
     key,
