@@ -15,24 +15,11 @@ interface Post {
   updatedAt: string;
 }
 
-interface Board {
-  id: number;
-  name: string;
-}
-
-interface SubBoard {
-  id: number;
-  name: string;
-  boardId: number;
-}
-
 export default function ViewPostPage() {
   const params = useParams();
   const router = useRouter();
   const postId = params?.postId as string;
   const [post, setPost] = useState<Post | null>(null);
-  const [board, setBoard] = useState<Board | null>(null);
-  const [subBoard, setSubBoard] = useState<SubBoard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -65,44 +52,8 @@ export default function ViewPostPage() {
       const token = localStorage.getItem('token');
       
       const data = await apiGet<Post>(`/api/posts/${postId}`, token || undefined);
+
       setPost(data);
-      
-      // 하위 게시판 정보 가져오기
-      if (data.subBoardId) {
-        const subBoardResponse = await fetch(`/admin/sub-boards?subBoardId=${data.subBoardId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        
-        if (subBoardResponse.ok) {
-          const subBoardData = await subBoardResponse.json();
-          setSubBoard(subBoardData);
-          
-          // 게시판 정보 가져오기
-          if (subBoardData.boardId) {
-            const boardResponse = await fetch(`/admin/boards`, {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-              },
-            });
-            
-            if (boardResponse.status === 401 || boardResponse.status === 403) {
-              localStorage.removeItem('token');
-              window.location.href = '/login';
-              return;
-            }
-            
-            if (boardResponse.ok) {
-              const boards = await boardResponse.json();
-              const foundBoard = boards.find((b: Board) => b.id === subBoardData.boardId);
-              if (foundBoard) {
-                setBoard(foundBoard);
-              }
-            }
-          }
-        }
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
     } finally {
@@ -136,13 +87,6 @@ export default function ViewPostPage() {
           <div className="max-w-4xl mx-auto">
             {/* 제목 */}
             <div className="bg-white border border-gray-200 rounded-lg p-6 mb-4">
-              {board && subBoard && (
-                <div className="mb-3">
-                  <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                    {board.name} &gt; {subBoard.name}
-                  </span>
-                </div>
-              )}
               <h1 className="text-3xl font-bold text-gray-900 mb-4">
                 {post.title}
               </h1>
@@ -161,18 +105,6 @@ export default function ViewPostPage() {
                 dangerouslySetInnerHTML={{ __html: post.content }}
               />
             </div>
-
-            {/* 버튼 그룹 */}
-            {subBoard && (
-              <div className="mt-6">
-                <button
-                  onClick={() => router.push(`/board/${subBoard.id}`)}
-                  className="px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition"
-                >
-                  목록으로
-                </button>
-              </div>
-            )}
 
             {/* 피드백 섹션 */}
             <FeedbackSection postId={post.id} />
