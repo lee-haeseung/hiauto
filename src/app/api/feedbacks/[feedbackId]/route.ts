@@ -34,7 +34,7 @@ export async function GET(
 
     // 사용자는 본인의 피드백만 조회 가능
     if (auth.role === 'access-key') {
-      if (feedback.accessKeyId !== auth.keyId) {
+      if (!auth.keyIds.includes(feedback.accessKeyId)) {
         return forbiddenResponse('본인의 피드백만 조회할 수 있습니다');
       }
       return successResponse(feedback);
@@ -72,7 +72,7 @@ export async function PUT(
     }
 
     // 본인의 피드백만 수정 가능 (관리자는 수정 불가)
-    if (auth.role === 'access-key' && feedback.accessKeyId !== auth.keyId) {
+    if (auth.role === 'access-key' && !auth.keyIds.includes(feedback.accessKeyId)) {
       return forbiddenResponse('본인의 피드백만 수정할 수 있습니다');
     }
 
@@ -88,7 +88,7 @@ export async function PUT(
       return errorResponse('피드백의 해결 여부를 선택해주세요');
     }
 
-    let updateData: { isSolved: boolean; phone?: string; description?: string } = {
+    const updateData: { isSolved: boolean; phone?: string; description?: string } = {
       isSolved,
     };
 

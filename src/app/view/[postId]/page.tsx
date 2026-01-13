@@ -26,7 +26,6 @@ export default function ViewPostPage() {
   useEffect(() => {
     // 액세스 키 권한 확인
     const role = localStorage.getItem('role');
-    const storedPostId = localStorage.getItem('postId');
     
     if (role !== 'access-key') {
       setError('접근 권한이 없습니다.');
@@ -34,13 +33,7 @@ export default function ViewPostPage() {
       return;
     }
     
-    // 액세스 키는 할당된 게시물만 조회 가능
-    if (storedPostId !== postId) {
-      setError('접근 권한이 없는 게시글입니다.');
-      setLoading(false);
-      return;
-    }
-    
+    // 서버에서 JWT 토큰으로 권한을 확인하므로 클라이언트에서는 체크하지 않음
     if (postId) {
       loadPost();
     }
@@ -55,7 +48,16 @@ export default function ViewPostPage() {
 
       setPost(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
+      const errorMessage = err instanceof Error ? err.message : '오류가 발생했습니다.';
+      
+      // 권한 없음 에러인 경우 로그인 페이지로 리다이렉트
+      if (errorMessage.includes('권한') || errorMessage.includes('로그인')) {
+        alert('이 게시글에 접근할 권한이 없습니다. 액세스 키를 다시 입력해주세요.');
+        router.push('/login');
+        return;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

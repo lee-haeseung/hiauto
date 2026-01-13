@@ -130,7 +130,7 @@ export default function AccessKeyManagementModal({
           memo: memo.trim(),
           expiresAt: expiryDate.toISOString(),
         },
-        token || ''
+        { token: token || undefined }
       );
 
       alert('액세스 키가 생성되었습니다.');
@@ -181,7 +181,7 @@ export default function AccessKeyManagementModal({
           memo: editMemo.trim(),
           expiresAt: new Date(editExpiresAt).toISOString(),
         },
-        token || ''
+        { token: token || undefined }
       );
 
       alert('액세스 키가 수정되었습니다.');
@@ -206,7 +206,7 @@ export default function AccessKeyManagementModal({
       
       await apiDelete(
         `/api/admin/access-keys/${keyId}`,
-        token || ''
+        { token: token || undefined }
       );
 
       alert('액세스 키가 삭제되었습니다.');

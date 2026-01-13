@@ -73,12 +73,12 @@ export async function apiGet<T>(url: string, token?: string): Promise<T> {
 export async function apiPost<T>(
   url: string,
   body?: unknown,
-  token?: string
+  options?: { token?: string }
 ): Promise<T> {
   return apiFetch<T>(url, {
     method: 'POST',
     body: body ? JSON.stringify(body) : undefined,
-    token,
+    token: options?.token,
   });
 }
 
@@ -86,12 +86,12 @@ export async function apiPost<T>(
 export async function apiPut<T>(
   url: string,
   body?: unknown,
-  token?: string
+  options?: { token?: string }
 ): Promise<T> {
   return apiFetch<T>(url, {
     method: 'PUT',
     body: body ? JSON.stringify(body) : undefined,
-    token,
+    token: options?.token,
   });
 }
 
@@ -99,16 +99,16 @@ export async function apiPut<T>(
 export async function apiPatch<T>(
   url: string,
   body?: unknown,
-  token?: string
+  options?: { token?: string }
 ): Promise<T> {
   return apiFetch<T>(url, {
     method: 'PATCH',
     body: body ? JSON.stringify(body) : undefined,
-    token,
+    token: options?.token,
   });
 }
 
 // DELETE 요청
-export async function apiDelete<T>(url: string, token?: string): Promise<T> {
-  return apiFetch<T>(url, { method: 'DELETE', token });
+export async function apiDelete<T>(url: string, options?: { token?: string }): Promise<T> {
+  return apiFetch<T>(url, { method: 'DELETE', token: options?.token });
 }

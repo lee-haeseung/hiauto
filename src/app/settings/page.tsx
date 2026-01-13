@@ -67,7 +67,7 @@ export default function SettingsPage() {
 
     try {
       const token = localStorage.getItem('token') || undefined;
-      await apiPost('/api/admin/boards', { name: name.trim() }, token);
+      await apiPost('/api/admin/boards', { name: name.trim() }, { token });
       window.location.reload();
     } catch (error) {
       console.error('Failed to add board:', error);
@@ -81,7 +81,7 @@ export default function SettingsPage() {
 
     try {
       const token = localStorage.getItem('token') || undefined;
-      await apiPatch(`/api/admin/boards/${id}`, { name: name.trim() }, token);
+      await apiPatch(`/api/admin/boards/${id}`, { name: name.trim() }, { token });
       window.location.reload();
     } catch (error) {
       console.error('Failed to update board name:', error);
@@ -100,7 +100,7 @@ export default function SettingsPage() {
       await apiPatch(
         '/api/admin/boards',
         { boards: [{ id: current.id, order: above.order }, { id: above.id, order: current.order }] },
-        token
+        { token }
       );
       window.location.reload();
     } catch (error) {
@@ -120,7 +120,7 @@ export default function SettingsPage() {
       await apiPatch(
         '/api/admin/boards',
         { boards: [{ id: current.id, order: below.order }, { id: below.id, order: current.order }] },
-        token
+        { token }
       );
       window.location.reload();
     } catch (error) {
@@ -135,7 +135,7 @@ export default function SettingsPage() {
 
     try {
       const token = localStorage.getItem('token') || undefined;
-      await apiPost('/api/admin/sub-boards', { boardId, name: name.trim() }, token);
+      await apiPost('/api/admin/sub-boards', { boardId, name: name.trim() }, { token });
       await loadSubBoards(boardId);
     } catch (error) {
       console.error('Failed to add sub-board:', error);
@@ -149,7 +149,7 @@ export default function SettingsPage() {
 
     try {
       const token = localStorage.getItem('token') || undefined;
-      await apiPatch(`/api/admin/sub-boards/${id}`, { name: name.trim() }, token);
+      await apiPatch(`/api/admin/sub-boards/${id}`, { name: name.trim() }, { token });
       await loadSubBoards(boardId);
     } catch (error) {
       console.error('Failed to update sub-board name:', error);
@@ -169,7 +169,7 @@ export default function SettingsPage() {
       await apiPatch(
         '/api/admin/sub-boards',
         { subBoards: [{ id: current.id, order: above.order }, { id: above.id, order: current.order }] },
-        token
+        { token }
       );
       await loadSubBoards(boardId);
     } catch (error) {
@@ -190,7 +190,7 @@ export default function SettingsPage() {
       await apiPatch(
         '/api/admin/sub-boards',
         { subBoards: [{ id: current.id, order: below.order }, { id: below.id, order: current.order }] },
-        token
+        { token }
       );
       await loadSubBoards(boardId);
     } catch (error) {

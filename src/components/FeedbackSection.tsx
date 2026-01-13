@@ -121,7 +121,7 @@ export default function FeedbackSection({ postId }: FeedbackSectionProps) {
             phone: '',
             description: '',
           },
-          token || undefined
+          { token: token || undefined }
         );
       } else {
         // 새로 생성
@@ -132,7 +132,7 @@ export default function FeedbackSection({ postId }: FeedbackSectionProps) {
             phone: '',
             description: '',
           },
-          token || undefined
+          { token: token || undefined }
         );
       }
 
@@ -180,7 +180,7 @@ export default function FeedbackSection({ postId }: FeedbackSectionProps) {
             phone,
             description,
           },
-          token || undefined
+          { token: token || undefined }
         );
       } else {
         // 새로 생성
@@ -191,7 +191,7 @@ export default function FeedbackSection({ postId }: FeedbackSectionProps) {
             phone,
             description,
           },
-          token || undefined
+          { token: token || undefined }
         );
       }
 

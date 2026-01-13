@@ -328,8 +328,8 @@ function WritePageContent() {
       };
       
       const post = isEditMode
-        ? await apiPut<any>(`/api/admin/posts/${postId}`, postData, token)
-        : await apiPost<any>('/api/admin/posts', postData, token);
+        ? await apiPut<any>(`/api/admin/posts/${postId}`, postData, { token })
+        : await apiPost<any>('/api/admin/posts', postData, { token });
       
       alert(isEditMode ? '게시글이 수정되었습니다!' : '게시글이 작성되었습니다!');
       router.push(`/post/${post.id}`);

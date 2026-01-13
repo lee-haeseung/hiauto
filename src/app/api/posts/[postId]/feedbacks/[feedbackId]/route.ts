@@ -29,7 +29,7 @@ export async function PUT(
     }
 
     // 본인의 피드백인지 확인
-    if (feedback.accessKeyId !== auth.keyId) {
+    if (!auth.keyIds.includes(feedback.accessKeyId)) {
       return forbiddenResponse('본인의 피드백만 수정할 수 있습니다');
     }
 

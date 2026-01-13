@@ -16,14 +16,27 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const data = await apiPost<{ token: string; role: string; postId: number; keyId: number }>(
+      // 기존 토큰을 가져와서 Authorization 헤더에 포함
+      const existingToken = localStorage.getItem('token');
+      
+      const data = await apiPost<{ 
+        token: string; 
+        role: string; 
+        postId: number; 
+        keyId: number;
+        postIds?: number[];
+        keyIds?: number[];
+      }>(
         '/api/auth/access-key',
-        { key: accessKey }
+        { key: accessKey },
+        { token: existingToken || undefined }
       );
 
       // JWT 토큰 저장
       localStorage.setItem('token', data.token);
       localStorage.setItem('role', data.role);
+      
+      // 하위 호환성을 위해 postId, keyId도 저장
       localStorage.setItem('postId', data.postId.toString());
       localStorage.setItem('keyId', data.keyId.toString());
 

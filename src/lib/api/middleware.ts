@@ -7,7 +7,7 @@ export type AdminAuthResult =
   | { success: false; error: string; status: number };
 
 export type UserAuthResult = 
-  | { success: true; userId: number; role: 'access-key'; keyId: number; postId: number }
+  | { success: true; userId: number; role: 'access-key'; keyIds: number[]; postIds: number[] }
   | { success: false; error: string; status: number };
 
 export type AuthResult = AdminAuthResult | UserAuthResult;
@@ -48,8 +48,15 @@ export async function requireUser(request: NextRequest): Promise<UserAuthResult>
     return { success: false, error: '유효하지 않은 토큰입니다', status: 403 };
   }
 
-  // accessKey가 여전히 유효한지 확인
-  const accessKey = await getAccessKeyById(payload.keyId as number);
+  const keyIds = payload.keyIds as number[];
+  const postIds = payload.postIds as number[];
+
+  if (!keyIds || !postIds || keyIds.length === 0) {
+    return { success: false, error: '유효하지 않은 토큰 형식입니다', status: 403 };
+  }
+
+  // 첫 번째 accessKey가 여전히 유효한지 확인
+  const accessKey = await getAccessKeyById(keyIds[0]);
   
   if (!accessKey) {
     return { success: false, error: '만료되었거나 유효하지 않은 접근 코드입니다', status: 403 };
@@ -57,10 +64,10 @@ export async function requireUser(request: NextRequest): Promise<UserAuthResult>
 
   return {
     success: true,
-    userId: payload.keyId as number,
+    userId: keyIds[0],
     role: 'access-key',
-    keyId: payload.keyId as number,
-    postId: payload.postId as number,
+    keyIds,
+    postIds,
   };
 }
 
@@ -86,7 +93,14 @@ export async function requireAuth(request: NextRequest): Promise<AuthResult> {
   // 사용자 토큰 확인
   const userPayload = await verifyAccessKeyToken(token);
   if (userPayload && userPayload.role === 'access-key') {
-    const accessKey = await getAccessKeyById(userPayload.keyId as number);
+    const keyIds = userPayload.keyIds as number[];
+    const postIds = userPayload.postIds as number[];
+
+    if (!keyIds || !postIds || keyIds.length === 0) {
+      return { success: false, error: '유효하지 않은 토큰 형식입니다', status: 403 };
+    }
+
+    const accessKey = await getAccessKeyById(keyIds[0]);
     
     if (!accessKey) {
       return { success: false, error: '만료되었거나 유효하지 않은 접근 코드입니다', status: 403 };
@@ -94,10 +108,10 @@ export async function requireAuth(request: NextRequest): Promise<AuthResult> {
 
     return {
       success: true,
-      userId: userPayload.keyId as number,
+      userId: keyIds[0],
       role: 'access-key',
-      keyId: userPayload.keyId as number,
-      postId: userPayload.postId as number,
+      keyIds,
+      postIds,
     };
   }
 

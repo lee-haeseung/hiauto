@@ -32,7 +32,7 @@ export async function GET(
 
     // 사용자(accessKey)인 경우, 본인의 access_keys에 등록된 post만 조회 가능
     if (auth.role === 'access-key') {
-      if (auth.postId !== postId) {
+      if (!auth.postIds.includes(postId)) {
         return forbiddenResponse('이 게시글에 접근할 권한이 없습니다');
       }
     }

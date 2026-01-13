@@ -24,18 +24,30 @@ export async function verifyAdminToken(token: string) {
   }
 }
 
-// 액세스 키 JWT 생성 (게시물 접근용)
-export async function createAccessKeyToken(keyId: number, postId: number, expiresAt?: Date) {
-  const jwt = new SignJWT({ keyId, postId, role: 'access-key' })
+// 액세스 키 JWT 생성 (게시물 접근용) - 여러 accessKey 지원
+export async function createAccessKeyToken(
+  keys: Array<{ keyId: number; postId: number; expiresAt?: Date }>
+) {
+  if (!keys || keys.length === 0) {
+    throw new Error('At least one access key is required');
+  }
+
+  const keyIds = keys.map(k => k.keyId);
+  const postIds = keys.map(k => k.postId);
+  
+  const jwt = new SignJWT({ keyIds, postIds, role: 'access-key' })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt();
 
   // JWT 토큰 자체의 만료 시간 (환경변수 기본값: 24h)
   const jwtExpiry = process.env.JWT_ACCESS_KEY_EXPIRES_IN || '24h';
   
-  // accessKey의 expiresAt과 JWT 기본 만료 중 더 빠른 시간 적용
-  if (expiresAt) {
-    const accessKeyExpiry = Math.floor(expiresAt.getTime() / 1000);
+  // 모든 accessKey의 expiresAt 중 가장 빠른 시간 찾기
+  const expiryDates = keys.map(k => k.expiresAt).filter((d): d is Date => d !== undefined);
+  
+  if (expiryDates.length > 0) {
+    const earliestExpiry = Math.min(...expiryDates.map(d => d.getTime()));
+    const accessKeyExpiry = Math.floor(earliestExpiry / 1000);
     const now = Math.floor(Date.now() / 1000);
     
     // JWT 기본 만료 시간을 초로 계산
