@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { requireUser, requireAuth } from '@/lib/api/middleware';
 import { successResponse, errorResponse, forbiddenResponse, serverErrorResponse } from '@/lib/api/response';
-import { createFeedback, getFeedbackByAccessKeyId, getAccessKeyById, getFeedbacksByPostId } from '@/lib/db/queries';
+import { createFeedback, getFeedbackByAccessKeyIdAndPostId, validateAccessKeysForPost, getFeedbacksByPostId } from '@/lib/db/queries';
 
 // GET /posts/[postId]/feedbacks - 피드백 목록 조회
 export async function GET(
@@ -25,7 +25,7 @@ export async function GET(
     if (auth.role === 'access-key') {
       const feedbacks = [];
       for (const keyId of auth.keyIds) {
-        const feedback = await getFeedbackByAccessKeyId(keyId);
+        const feedback = await getFeedbackByAccessKeyIdAndPostId(keyId, postId);
         if (feedback) {
           feedbacks.push(feedback);
         }
@@ -61,16 +61,13 @@ export async function POST(
     }
 
     // 사용자의 accessKey가 이 게시글에 접근 가능한지 확인
-    if (!auth.postIds.includes(postId)) {
+    const validKey = await validateAccessKeysForPost(auth.keyIds, postId);
+    if (!validKey) {
       return forbiddenResponse('이 게시글에 피드백을 작성할 권한이 없습니다');
     }
 
-    // 해당 postId에 해당하는 keyId 찾기
-    const postIndex = auth.postIds.indexOf(postId);
-    const keyIdForPost = auth.keyIds[postIndex];
-
     // 이미 피드백을 작성했는지 확인 (accessKey당 1개만 가능)
-    const existingFeedback = await getFeedbackByAccessKeyId(keyIdForPost);
+    const existingFeedback = await getFeedbackByAccessKeyIdAndPostId(validKey.id, postId);
     if (existingFeedback) {
       return errorResponse('이미 피드백을 작성하셨습니다. 수정을 이용해주세요');
     }
@@ -97,16 +94,10 @@ export async function POST(
       }
     }
 
-    // accessKey 정보 가져오기 (memo 저장용)
-    const accessKey = await getAccessKeyById(keyIdForPost);
-    if (!accessKey) {
-      return forbiddenResponse('유효하지 않은 접근 코드입니다');
-    }
-
     const feedback = await createFeedback({
       postId,
-      accessKeyId: keyIdForPost,
-      accessKeyMemo: accessKey.memo || null,
+      accessKeyId: validKey.id,
+      accessKeyMemo: validKey.memo || null,
       phone: feedbackData.phone,
       description: feedbackData.description,
       isSolved: isSolved,

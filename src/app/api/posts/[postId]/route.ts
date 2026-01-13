@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { requireAuth } from '@/lib/api/middleware';
 import { successResponse, errorResponse, forbiddenResponse, notFoundResponse, serverErrorResponse } from '@/lib/api/response';
-import { getPostById } from '@/lib/db/queries';
+import { getPostById, validateAccessKeysForPost } from '@/lib/db/queries';
 
 // GET /posts/[postId] - 게시글 조회 (관리자 또는 액세스키 사용자만)
 export async function GET(
@@ -30,9 +30,10 @@ export async function GET(
       return notFoundResponse('게시글을 찾을 수 없습니다');
     }
 
-    // 사용자(accessKey)인 경우, 본인의 access_keys에 등록된 post만 조회 가능
+    // 사용자(accessKey)인 경우, keyIds 중 하나라도 이 postId에 유효한지 확인
     if (auth.role === 'access-key') {
-      if (!auth.postIds.includes(postId)) {
+      const validKey = await validateAccessKeysForPost(auth.keyIds, postId);
+      if (!validKey) {
         return forbiddenResponse('이 게시글에 접근할 권한이 없습니다');
       }
     }

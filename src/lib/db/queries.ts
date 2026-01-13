@@ -139,11 +139,6 @@ export async function verifyAccessKey(key: string) {
   
   const accessKey = result[0];
   
-  // 만료 확인
-  if (accessKey.expiresAt && accessKey.expiresAt < new Date()) {
-    return null;
-  }
-  
   return accessKey;
 }
 
@@ -164,6 +159,31 @@ export async function getAccessKeyById(keyId: number, skipExpiryCheck: boolean =
   }
   
   return accessKey;
+}
+
+// keyIds 중 하나라도 특정 postId에 유효한 접근 권한이 있는지 확인
+export async function validateAccessKeysForPost(keyIds: number[], postId: number) {
+  if (!keyIds || keyIds.length === 0) {
+    return null;
+  }
+
+  // keyIds 중에서 postId에 접근 가능하고 만료되지 않은 키 찾기
+  const result = await db
+    .select()
+    .from(accessKeys)
+    .where(
+      and(
+        inArray(accessKeys.id, keyIds),
+        eq(accessKeys.postId, postId),
+        or(
+          isNull(accessKeys.expiresAt),
+          gte(accessKeys.expiresAt, new Date())
+        )
+      )
+    )
+    .limit(1);
+
+  return result[0] || null;
 }
 
 // 게시글 검색
@@ -407,8 +427,8 @@ export async function getFeedbacksByPostId(postId: number) {
 }
 
 // 특정 accessKey의 피드백 조회
-export async function getFeedbackByAccessKeyId(accessKeyId: number) {
-  const result = await db.select().from(feedbacks).where(eq(feedbacks.accessKeyId, accessKeyId));
+export async function getFeedbackByAccessKeyIdAndPostId(accessKeyId: number, postId: number) {
+  const result = await db.select().from(feedbacks).where(and(eq(feedbacks.accessKeyId, accessKeyId), eq(feedbacks.postId, postId)));
   return result[0] || null;
 }
 
